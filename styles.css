@@ -28,6 +28,11 @@
             letter-spacing: 0.05em;
         }
 
+        h1 a {
+            text-decoration: none;
+            color: inherit;
+        }
+
         .gallery {
             margin-top: 120px;
             padding: 0 3rem 3rem;
@@ -44,6 +49,10 @@
 
         .gallery-item:hover {
             opacity: 0.85;
+        }
+
+        .gallery-item:hover img {
+            filter: invert(100%);
         }
 
         .gallery-item img {
