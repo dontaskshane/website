@@ -1,0 +1,124 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fafafa;
+            color: #1a1a1a;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem 3rem;
+            background: rgba(250, 250, 250, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+        }
+
+        .gallery {
+            margin-top: 120px;
+            padding: 0 3rem 3rem;
+            columns: 3;
+            column-gap: 2rem;
+        }
+
+        .gallery-item {
+            break-inside: avoid;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            opacity: 0.85;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            display: block;
+            border-radius: 2px;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            padding: 2rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            line-height: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .gallery {
+                columns: 2;
+            }
+            
+            header {
+                padding: 1.5rem 2rem;
+            }
+            
+            .gallery {
+                padding: 0 2rem 2rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .gallery {
+                columns: 1;
+            }
+            
+            header {
+                padding: 1rem 1.5rem;
+            }
+            
+            .gallery {
+                padding: 0 1.5rem 1.5rem;
+                margin-top: 100px;
+            }
+            
+            h1 {
+                font-size: 1.25rem;
+            }
+        }
