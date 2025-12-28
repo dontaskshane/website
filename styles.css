@@ -229,4 +229,27 @@
                 margin-top: 2rem;
                 padding: 1rem;
             }
+
+            .lightbox {
+                padding: 1rem;
+            }
+
+            .lightbox img {
+                max-width: 80%;
+                max-height: 80vh;
+            }
+
+            .lightbox-prev {
+                left: 0.5rem;
+            }
+
+            .lightbox-next {
+                right: 0.5rem;
+            }
+
+            .lightbox-close {
+                top: 1rem;
+                right: 1rem;
+                font-size: 1.5rem;
+            }
         }
