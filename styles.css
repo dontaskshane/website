@@ -117,10 +117,6 @@
             filter: invert(100%);
         }
 
-        .gallery-item.inverted img {
-            filter: invert(100%);
-        }
-
         .global-invert .gallery-item img {
             filter: invert(100%);
         }
