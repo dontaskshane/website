@@ -75,28 +75,15 @@
             });
         });
 
-        // IntersectionObserver for scroll-based invert on mobile
+        // Randomly invert 1/3 of the photos on mobile
         const isMobile = window.matchMedia('(max-width: 640px)').matches;
         if (isMobile) {
-            // Initially invert all images on mobile
-            document.querySelectorAll('.gallery-item').forEach(item => {
-                item.classList.add('inverted');
-            });
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.remove('inverted');
-                    } else {
-                        entry.target.classList.add('inverted');
-                    }
-                });
-            }, { threshold: 0.5 });
-
-            // Observe all gallery items
-            document.querySelectorAll('.gallery-item').forEach(item => {
-                observer.observe(item);
-            });
+            const items = document.querySelectorAll('.gallery-item');
+            const numToInvert = Math.floor(items.length / 3);
+            const shuffled = Array.from(items).sort(() => 0.5 - Math.random());
+            for (let i = 0; i < numToInvert; i++) {
+                shuffled[i].classList.add('inverted');
+            }
         }
 
         function closeLightbox() {
