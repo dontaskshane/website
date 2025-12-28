@@ -15,6 +15,8 @@
 
     <div class="lightbox" id="lightbox">
         <button class="lightbox-close" onclick="closeLightbox()">×</button>
+        <button class="lightbox-prev" onclick="showPrev()">‹</button>
+        <button class="lightbox-next" onclick="showNext()">›</button>
         <img id="lightbox-img" src="" alt="">
     </div>
 
@@ -42,6 +44,8 @@
         const lightbox = document.getElementById('lightbox');
         const lightboxImg = document.getElementById('lightbox-img');
 
+        let currentIndex = 0;
+
         // Generate gallery items from the photos array
         photos.forEach((photo, index) => {
             const item = document.createElement('div');
@@ -54,13 +58,35 @@
             
             // Add click listener for lightbox
             item.addEventListener('click', function() {
+                currentIndex = index;
                 lightboxImg.src = img.src;
                 lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
             });
         });
 
+        // IntersectionObserver for scroll-based invert on mobile
+        const isMobile = window.matchMedia('(max-width: 640px)').matches;
+        if (isMobile) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('inverted');
+                    } else {
+                        entry.target.classList.remove('inverted');
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            // Observe all gallery items
+            document.querySelectorAll('.gallery-item').forEach(item => {
+                observer.observe(item);
+            });
+        }
+
         function closeLightbox() {
             lightbox.classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
 
         lightbox.addEventListener('click', function(e) {
