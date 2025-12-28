@@ -79,69 +79,7 @@
             border-radius: 2px;
         }
 
-        .lightbox {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: white;
-            z-index: 1000;
-            padding: 2rem;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .lightbox.active {
-            display: flex;
-        }
-
-        .lightbox img {
-            max-width: 90%;
-            max-height: 90vh;
-            object-fit: contain;
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: 2rem;
-            right: 2rem;
-            color: black;
-            font-size: 2rem;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0.5rem;
-            line-height: 1;
-        }
-
-        .lightbox-prev, .lightbox-next {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            color: black;
-            font-size: 2rem;
-            cursor: pointer;
-            background: white;
-            border: 2px solid black;
-            padding: 0.5rem;
-            line-height: 1;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .lightbox-prev {
-            left: 2rem;
-        }
-
-        .lightbox-next {
-            right: 2rem;
-        }
+        /* Fancybox handles the lightbox */
 
         @media (max-width: 1024px) {
             .gallery {

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,17 +14,6 @@
     </header>
 
     <div class="gallery" id="gallery"></div>
-
-    <div class="lightbox" id="lightbox">
-        <button class="lightbox-close" onclick="closeLightbox()">×</button>
-        <button class="lightbox-prev" onclick="showPrev()">‹</button>
-        <button class="lightbox-next" onclick="showNext()">›</button>
-        <img id="lightbox-img" src="" alt="">
-    </div>
-
-    <footer>
-        <p>© 2025 Shane</p>
-    </footer>
 
     <script>
         const photos = [
@@ -51,18 +42,17 @@
             const item = document.createElement('div');
             item.className = 'gallery-item';
             
-                const img = document.createElement('img');
-                img.src = imageFolderPath + photo;
-                img.alt = '';            item.appendChild(img);
-            gallery.appendChild(item);
+            const link = document.createElement('a');
+            link.href = imageFolderPath + photo;
+            link.setAttribute('data-fancybox', 'gallery');
             
-            // Add click listener for lightbox
-            item.addEventListener('click', function() {
-                currentIndex = index;
-                lightboxImg.src = img.src;
-                lightbox.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            });
+            const img = document.createElement('img');
+            img.src = imageFolderPath + photo;
+            img.alt = '';
+            
+            link.appendChild(img);
+            item.appendChild(link);
+            gallery.appendChild(item);
         });
 
         // IntersectionObserver for scroll-based invert on mobile
@@ -83,23 +73,6 @@
                 observer.observe(item);
             });
         }
-
-        function closeLightbox() {
-            lightbox.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-
-        lightbox.addEventListener('click', function(e) {
-            if (e.target === lightbox) {
-                closeLightbox();
-            }
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeLightbox();
-            }
-        });
     </script>
 </body>
 </html>
