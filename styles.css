@@ -33,9 +33,23 @@
             color: inherit;
         }
 
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem 3rem;
+            background: rgba(250, 250, 250, 0.95);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            font-size: 0.875rem;
+            color: #666;
+            border-top: 1px solid #e8e8e8;
+        }
+
         .gallery {
             margin-top: 120px;
-            padding: 0 3rem 3rem;
+            padding: 0 3rem 5rem;
             columns: 3;
             column-gap: 2rem;
         }
@@ -109,7 +123,7 @@
             }
             
             .gallery {
-                padding: 0 2rem 2rem;
+                padding: 0 2rem 4rem;
             }
         }
 
@@ -123,7 +137,7 @@
             }
             
             .gallery {
-                padding: 0 1.5rem 1.5rem;
+                padding: 0 1.5rem 4rem;
                 margin-top: 100px;
             }
             
