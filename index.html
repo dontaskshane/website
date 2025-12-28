@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
-    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,6 +12,17 @@
     </header>
 
     <div class="gallery" id="gallery"></div>
+
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" onclick="closeLightbox()">×</button>
+        <button class="lightbox-prev" onclick="showPrev()">‹</button>
+        <button class="lightbox-next" onclick="showNext()">›</button>
+        <img id="lightbox-img" src="" alt="">
+    </div>
+
+    <footer>
+        <p>© 2025 Shane</p>
+    </footer>
 
     <script>
         const photos = [
@@ -25,7 +34,15 @@
             'img_6.jpeg',
             'img_7.JPG',
             'img_8.JPG',
-            'img_9.JPG'
+            'img_9.JPG',
+            'img_10.JPG',
+            'img_11.jpeg',
+            'img_12.jpg',
+            'img_13.jpg',
+            'img_14.jpg',
+            'img_15.jpg',
+            'img_16.jpeg',
+            'img_17.jpeg'
         ];
 
         // Path to images folder
@@ -42,17 +59,20 @@
             const item = document.createElement('div');
             item.className = 'gallery-item';
             
-            const link = document.createElement('a');
-            link.href = imageFolderPath + photo;
-            link.setAttribute('data-fancybox', 'gallery');
-            
             const img = document.createElement('img');
             img.src = imageFolderPath + photo;
             img.alt = '';
             
-            link.appendChild(img);
-            item.appendChild(link);
+            item.appendChild(img);
             gallery.appendChild(item);
+            
+            // Add click listener for lightbox
+            item.addEventListener('click', function() {
+                currentIndex = index;
+                lightboxImg.src = img.src;
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
         });
 
         // IntersectionObserver for scroll-based invert on mobile
@@ -73,6 +93,37 @@
                 observer.observe(item);
             });
         }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function showPrev() {
+            currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+            lightboxImg.src = imageFolderPath + photos[currentIndex];
+        }
+
+        function showNext() {
+            currentIndex = (currentIndex + 1) % photos.length;
+            lightboxImg.src = imageFolderPath + photos[currentIndex];
+        }
+
+        lightbox.addEventListener('click', function(e) {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            } else if (e.key === 'ArrowLeft') {
+                showPrev();
+            } else if (e.key === 'ArrowRight') {
+                showNext();
+            }
+        });
     </script>
 </body>
 </html>
