@@ -78,12 +78,17 @@
         // IntersectionObserver for scroll-based invert on mobile
         const isMobile = window.matchMedia('(max-width: 640px)').matches;
         if (isMobile) {
+            // Initially invert all images on mobile
+            document.querySelectorAll('.gallery-item').forEach(item => {
+                item.classList.add('inverted');
+            });
+
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        entry.target.classList.add('inverted');
-                    } else {
                         entry.target.classList.remove('inverted');
+                    } else {
+                        entry.target.classList.add('inverted');
                     }
                 });
             }, { threshold: 0.5 });
