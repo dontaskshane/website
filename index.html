@@ -8,7 +8,11 @@
 </head>
 <body>
     <header>
-        <h1><a href="/">Portfolio</a></h1>
+        <h1><a href="/">Shane</a></h1>
+        <label class="toggle">
+            <input type="checkbox" id="invert-toggle">
+            <span class="slider"></span>
+        </label>
     </header>
 
     <div class="gallery" id="gallery"></div>
@@ -98,6 +102,11 @@
                 shuffled[i].classList.add('inverted');
             }
         }
+
+        // Toggle global invert
+        document.getElementById('invert-toggle').addEventListener('change', function() {
+            document.body.classList.toggle('global-invert');
+        });
 
         function closeLightbox() {
             lightbox.classList.remove('active');
