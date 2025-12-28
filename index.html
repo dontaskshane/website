@@ -31,7 +31,7 @@
             'img_9.JPG'
         ];
 
-        // Path to your images folder
+        // Path to images folder
         const imageFolderPath = 'images/';
 
         const gallery = document.getElementById('gallery');
@@ -43,11 +43,9 @@
             const item = document.createElement('div');
             item.className = 'gallery-item';
             
-            const img = document.createElement('img');
-            img.src = imageFolderPath + photo;
-            img.alt = `Photo ${index + 1}`;
-            
-            item.appendChild(img);
+                const img = document.createElement('img');
+                img.src = imageFolderPath + photo;
+                img.alt = '';            item.appendChild(img);
             gallery.appendChild(item);
             
             // Add click listener for lightbox
