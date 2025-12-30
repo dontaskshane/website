@@ -72,25 +72,44 @@
 
         let currentIndex = 0;
 
+        // Helper to detect mobile device
+        function isMobile() {
+            return window.matchMedia('(max-width: 640px)').matches;
+        }
+
         // Generate gallery items from the photos array
         photos.forEach((photo, index) => {
             const item = document.createElement('div');
             item.className = 'gallery-item';
-            
+
             const img = document.createElement('img');
             img.src = imageFolderPath + photo;
             img.alt = '';
-            
+
+            // Prevent double-tap zoom on mobile
+            if (isMobile()) {
+                img.addEventListener('touchstart', function(e) {
+                    if (e.touches.length > 1) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+                img.addEventListener('dblclick', function(e) {
+                    e.preventDefault();
+                });
+            }
+
             item.appendChild(img);
             gallery.appendChild(item);
-            
-            // Add click listener for lightbox
-            item.addEventListener('click', function() {
-                currentIndex = index;
-                lightboxImg.src = img.src;
-                lightbox.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            });
+
+            // Only allow click to open lightbox on non-mobile
+            if (!isMobile()) {
+                item.addEventListener('click', function() {
+                    currentIndex = index;
+                    lightboxImg.src = img.src;
+                    lightbox.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                });
+            }
         });
 
         // Toggle global invert
