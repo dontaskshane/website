@@ -205,6 +205,11 @@
         }
 
         @media (max-width: 640px) {
+            /* Disable hover and active invert effect on mobile */
+            .gallery-item:hover img,
+            .gallery-item:active img {
+                filter: none !important;
+            }
             .gallery {
                 columns: 1;
             }
