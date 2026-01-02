@@ -208,6 +208,21 @@
 
         @media (max-width: 640px) {
 
+            /* No visual feedback when tapping images on mobile */
+            .gallery-item {
+                cursor: default;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .gallery-item img {
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .gallery-item:hover,
+            .gallery-item:active {
+                opacity: 1 !important;
+            }
+
             /* Disable hover and active invert effect on mobile */
             .gallery-item:hover img,
             .gallery-item:active img {
