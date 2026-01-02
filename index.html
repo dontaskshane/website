@@ -70,6 +70,16 @@
         const lightbox = document.getElementById('lightbox');
         const lightboxImg = document.getElementById('lightbox-img');
 
+        function syncHeaderHeightVar() {
+            const header = document.querySelector('header');
+            if (!header) return;
+            document.documentElement.style.setProperty('--header-height', `${header.offsetHeight}px`);
+        }
+
+        syncHeaderHeightVar();
+        window.addEventListener('resize', syncHeaderHeightVar);
+        window.addEventListener('orientationchange', syncHeaderHeightVar);
+
         let currentIndex = 0;
 
         // Helper to detect mobile device

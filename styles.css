@@ -97,7 +97,7 @@
         }
 
         .gallery {
-            margin-top: 120px;
+            margin-top: var(--header-height, 120px);
             padding: 0 3rem 5rem;
             columns: 3;
             column-gap: 2rem;
@@ -241,7 +241,7 @@
 
             .gallery {
                 padding: 0 1.5rem 4rem;
-                margin-top: 100px;
+                margin-top: var(--header-height, 100px);
             }
 
             h1 {
