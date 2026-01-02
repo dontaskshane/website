@@ -10,10 +10,9 @@
 <body>
     <header>
         <h1><a href="/">Shane Wetzel</a></h1>
-        <label class="toggle">
-            <input type="checkbox" id="invert-toggle">
-            <span class="slider"></span>
-        </label>
+        <button id="invert-toggle" class="invert-toggle" type="button" aria-pressed="false" aria-label="Toggle invert">
+            <img src="images/logo_sw.png" alt="">
+        </button>
     </header>
 
     <div class="gallery" id="gallery"></div>
@@ -22,7 +21,7 @@
         <button class="lightbox-close" onclick="closeLightbox()">×</button>
         <button class="lightbox-prev" onclick="showPrev()">‹</button>
         <button class="lightbox-next" onclick="showNext()">›</button>
-        <img id="lightbox-img" src="" alt="">
+        <img id="lightbox-img" src="" alt="" draggable="false">
     </div>
 
     <footer>
@@ -95,6 +94,7 @@
             const img = document.createElement('img');
             img.src = imageFolderPath + photo;
             img.alt = '';
+            img.draggable = false;
 
             // Prevent double-tap zoom on mobile
             if (isMobile()) {
@@ -123,8 +123,10 @@
         });
 
         // Toggle global invert
-        document.getElementById('invert-toggle').addEventListener('change', function() {
+        const invertToggle = document.getElementById('invert-toggle');
+        invertToggle.addEventListener('click', function() {
             document.body.classList.toggle('global-invert');
+            invertToggle.setAttribute('aria-pressed', document.body.classList.contains('global-invert') ? 'true' : 'false');
         });
 
         function closeLightbox() {

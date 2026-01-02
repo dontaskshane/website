@@ -37,49 +37,27 @@
             color: inherit;
         }
 
-        .toggle {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-
-        .toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
+        .invert-toggle {
+            appearance: none;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
+            line-height: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+        .invert-toggle img {
+            height: 44px;
+            width: auto;
+            display: block;
+            filter: grayscale(100%) opacity(0.45);
+            transition: filter 0.2s ease;
         }
 
-        input:checked+.slider {
-            background-color: #3EFC14;
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(26px);
+        body.global-invert .invert-toggle img {
+            filter: none;
         }
 
         footer {
@@ -130,6 +108,10 @@
             width: 100%;
             display: block;
             border-radius: 2px;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
         }
 
         /* Lightbox */
@@ -155,6 +137,10 @@
             max-width: 90%;
             max-height: 90vh;
             object-fit: contain;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
         }
 
         .lightbox-close {
