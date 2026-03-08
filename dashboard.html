@@ -385,8 +385,6 @@
         /* ── News ── */
         .news-list {
             list-style: none;
-            max-height: 340px;
-            overflow-y: auto;
         }
 
         .news-item {
@@ -456,7 +454,7 @@
         .card-weather { grid-column: 2; grid-row: 1; }
         .card-calendar { grid-column: 3; grid-row: 1; }
         .card-notes { grid-column: 2; grid-row: 2; }
-        .card-news { grid-column: 2 / 4; grid-row: 3; }
+        .card-news { grid-column: 3; grid-row: 2; max-height: 500px; overflow-y: auto; }
 
         /* ── Responsive ── */
         @media (max-width: 900px) {
@@ -467,7 +465,7 @@
             .card-weather { grid-column: 1; grid-row: auto; }
             .card-calendar { grid-column: 2; grid-row: auto; }
             .card-notes { grid-column: 1; grid-row: auto; }
-            .card-news { grid-column: 1 / 3; grid-row: auto; }
+            .card-news { grid-column: 2; grid-row: auto; }
         }
 
         @media (max-width: 600px) {
@@ -893,8 +891,8 @@
 
     function stripHTML(html) {
         const tmp = document.createElement('div');
-        tmp.textContent = html;
-        return tmp.textContent;
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
     }
 
     function timeAgo(dateStr) {
@@ -948,24 +946,36 @@
         container.appendChild(ul);
     }
 
-    async function fetchViaProxy(url) {
-        // Try allorigins first, then rss2json as fallback
-        try {
-            const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-            const res = await fetch(proxyUrl);
-            if (!res.ok) throw new Error('Proxy error');
-            const data = await res.json();
-            if (!data.contents) throw new Error('Empty');
-            return parseRSSItems(data.contents);
-        } catch {
-            return null;
-        }
+    // JSONP fetch — bypasses CORS by loading via <script> tag
+    function fetchJSONP(url) {
+        return new Promise((resolve, reject) => {
+            const cbName = '_jsonp_' + Math.random().toString(36).slice(2);
+            const timer = setTimeout(() => {
+                delete window[cbName];
+                if (script.parentNode) script.parentNode.removeChild(script);
+                reject(new Error('timeout'));
+            }, 10000);
+            window[cbName] = function(data) {
+                clearTimeout(timer);
+                delete window[cbName];
+                if (script.parentNode) script.parentNode.removeChild(script);
+                resolve(data);
+            };
+            const script = document.createElement('script');
+            script.src = url + '&callback=' + cbName;
+            script.onerror = function() {
+                clearTimeout(timer);
+                delete window[cbName];
+                if (script.parentNode) script.parentNode.removeChild(script);
+                reject(new Error('load error'));
+            };
+            document.head.appendChild(script);
+        });
     }
 
-    async function fetchViaRss2json(url) {
+    async function fetchRss2jsonJSONP(rssUrl) {
         try {
-            const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(url));
-            const data = await res.json();
+            const data = await fetchJSONP('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
             if (data.status !== 'ok' || !data.items) return null;
             return data.items.map(i => ({
                 title: i.title || '',
@@ -983,13 +993,8 @@
         const newsContainer = document.getElementById('newsContent');
         const policeContainer = document.getElementById('policeContent');
 
-        // Try Google News via proxy for Bern news
-        let bernItems = await fetchViaProxy('https://news.google.com/rss/search?q=Bern+Schweiz&hl=de&gl=CH&ceid=CH%3Ade');
-
-        // Fallback: NZZ recent via rss2json
-        if (!bernItems || bernItems.length === 0) {
-            bernItems = await fetchViaRss2json('https://www.nzz.ch/recent.rss');
-        }
+        // NZZ recent news via JSONP (reliable, CORS-free)
+        const bernItems = await fetchRss2jsonJSONP('https://www.nzz.ch/recent.rss');
 
         newsContainer.innerHTML = '';
         if (bernItems && bernItems.length > 0) {
@@ -997,26 +1002,21 @@
             sectionTitle.className = 'news-section-title';
             sectionTitle.textContent = 'Aktuell';
             newsContainer.appendChild(sectionTitle);
-            renderNewsItems(newsContainer, bernItems, 5);
+            renderNewsItems(newsContainer, bernItems, 6);
         } else {
             newsContainer.innerHTML = '<p class="news-loading">Unable to load news</p>';
         }
 
-        // Police Bern
-        let policeItems = await fetchViaProxy('https://news.google.com/rss/search?q=Polizei+Bern+Medienmitteilung+Kantonspolizei&hl=de&gl=CH&ceid=CH%3Ade');
-
-        // Fallback: Google News police via rss2json (won't work, so try NZZ)
-        if (!policeItems || policeItems.length === 0) {
-            policeItems = await fetchViaProxy('https://news.google.com/rss/search?q=%22Kantonspolizei+Bern%22&hl=de&gl=CH&ceid=CH%3Ade');
-        }
+        // NZZ Zurich regional for police/crime news
+        const regionalItems = await fetchRss2jsonJSONP('https://www.nzz.ch/zuerich.rss');
 
         policeContainer.innerHTML = '';
-        if (policeItems && policeItems.length > 0) {
+        if (regionalItems && regionalItems.length > 0) {
             const sectionTitle = document.createElement('div');
             sectionTitle.className = 'news-section-title';
-            sectionTitle.textContent = 'Polizei Bern';
+            sectionTitle.textContent = 'Regional';
             policeContainer.appendChild(sectionTitle);
-            renderNewsItems(policeContainer, policeItems, 4);
+            renderNewsItems(policeContainer, regionalItems, 4);
         }
     }
 
