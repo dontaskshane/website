@@ -164,6 +164,16 @@ Then visit `http://localhost:8080`.
 
 ---
 
+## File Edit Policy
+
+**`index.html` and `styles.css`** — Only modify these when the user explicitly asks for changes to the public portfolio/gallery page. Do not touch them as a side effect of other tasks.
+
+**`dashboard.html`** — This is a private personal page (a "backdoor" for the owner's own use). It is intentionally not linked from the public site. Only modify it when the user explicitly asks for changes to the dashboard specifically. Never remove, expose, or publicly link this page.
+
+**`images/`** — Only add, remove, or rename images when explicitly instructed.
+
+---
+
 ## Key Constraints and Gotchas
 
 - **No backend** — do not add server-side code unless architecture changes are explicitly approved
