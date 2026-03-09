@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦠</text></svg>">
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
     <style>
         :root {
             --bg: #fafafa;
@@ -26,7 +27,7 @@
             min-height: 100vh;
         }
 
-        /* ── Login ── */
+        /* -- Login -- */
         .login-screen {
             display: flex;
             align-items: center;
@@ -95,7 +96,7 @@
             min-height: 1.2em;
         }
 
-        /* ── Dashboard ── */
+        /* -- Dashboard -- */
         .dashboard {
             display: none;
             max-width: 1200px;
@@ -156,6 +157,17 @@
             color: var(--text);
         }
 
+        .storage-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.8rem;
+            color: #856404;
+            display: none;
+        }
+
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -191,7 +203,7 @@
             margin-bottom: 1rem;
         }
 
-        /* ── Weather ── */
+        /* -- Weather -- */
         .weather-main {
             display: flex;
             align-items: center;
@@ -221,7 +233,30 @@
             margin-bottom: 0.25rem;
         }
 
-        /* ── Calendar ── */
+        /* -- Calendar -- */
+        .cal-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .cal-nav-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+        }
+
+        .cal-nav-btn:hover {
+            border-color: #999;
+            color: var(--text);
+        }
+
         .cal-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -242,6 +277,7 @@
             padding: 0.35rem 0;
             border-radius: 6px;
             cursor: default;
+            position: relative;
         }
 
         .cal-day.today {
@@ -254,7 +290,77 @@
             color: #ddd;
         }
 
-        /* ── Todos ── */
+        .cal-day.holiday {
+            color: #c0392b;
+            font-weight: 600;
+        }
+
+        .cal-day.holiday.today {
+            background: #c0392b;
+            color: #fff;
+        }
+
+        .cal-day .cal-holiday-dot {
+            position: absolute;
+            bottom: 1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #c0392b;
+        }
+
+        .cal-day.today .cal-holiday-dot {
+            background: #fff;
+        }
+
+        .cal-holiday-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text);
+            color: #fff;
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .cal-day:hover .cal-holiday-tooltip {
+            display: block;
+        }
+
+        .cal-legend {
+            margin-top: 0.75rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #f0f0f0;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .cal-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.15rem 0;
+        }
+
+        .cal-legend-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #c0392b;
+            flex-shrink: 0;
+        }
+
+        /* -- Todos -- */
         .todo-input-row {
             display: flex;
             gap: 0.5rem;
@@ -329,7 +435,7 @@
         }
 
         .todo-item input[type="checkbox"]:checked::after {
-            content: '✓';
+            content: '\2713';
             position: absolute;
             top: 50%;
             left: 50%;
@@ -357,23 +463,39 @@
 
         .todo-delete:hover { color: #c00; }
 
-        /* ── Notes ── */
-        .notes-area {
-            width: 100%;
-            min-height: 200px;
+        /* -- Notes (Quill) -- */
+        .notes-editor-wrapper {
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 0.75rem 1rem;
-            font-size: 0.85rem;
-            font-family: inherit;
-            line-height: 1.6;
-            resize: vertical;
-            outline: none;
+            overflow: hidden;
             background: var(--bg);
-            color: var(--text);
         }
 
-        .notes-area:focus { border-color: #999; }
+        .notes-editor-wrapper .ql-toolbar {
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background: var(--card);
+            padding: 0.4rem;
+        }
+
+        .notes-editor-wrapper .ql-container {
+            border: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .notes-editor-wrapper .ql-editor {
+            min-height: 160px;
+            max-height: 250px;
+            overflow-y: auto;
+            line-height: 1.6;
+            padding: 0.75rem 1rem;
+        }
+
+        .notes-editor-wrapper .ql-editor.ql-blank::before {
+            font-style: normal;
+            color: #ccc;
+        }
 
         .notes-saved {
             font-size: 0.7rem;
@@ -382,7 +504,38 @@
             min-height: 1em;
         }
 
-        /* ── News ── */
+        /* -- News -- */
+        .news-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .news-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .news-tab:hover {
+            color: var(--text);
+        }
+
+        .news-tab.active {
+            color: var(--text);
+            border-bottom-color: var(--accent);
+        }
+
         .news-list {
             list-style: decimal;
             padding-left: 1.4rem;
@@ -467,19 +620,19 @@
             color: var(--text-secondary);
         }
 
-        /* ── Layout spans ── */
-        .card-news { grid-column: 1; grid-row: 1 / 3; max-height: 600px; overflow-y: auto; }
+        /* -- Layout spans -- */
+        .card-news { grid-column: 1; grid-row: 1 / 3; overflow-y: auto; }
         .card-weather { grid-column: 2; grid-row: 1; }
         .card-calendar { grid-column: 3; grid-row: 1; }
         .card-todos { grid-column: 2; grid-row: 2; }
         .card-notes { grid-column: 3; grid-row: 2; }
 
-        /* ── Responsive ── */
+        /* -- Responsive -- */
         @media (max-width: 900px) {
             .grid {
                 grid-template-columns: 1fr 1fr;
             }
-            .card-news { grid-column: 1 / 3; grid-row: auto; max-height: 400px; }
+            .card-news { grid-column: 1 / 3; grid-row: auto; max-height: 500px; }
             .card-weather { grid-column: 1; grid-row: auto; }
             .card-calendar { grid-column: 2; grid-row: auto; }
             .card-todos { grid-column: 1; grid-row: auto; }
@@ -499,7 +652,7 @@
                 grid-column: 1;
                 grid-row: auto;
             }
-            .card-news { max-height: 350px; }
+            .card-news { max-height: 400px; }
             .dash-header {
                 flex-direction: column;
                 gap: 0.75rem;
@@ -525,6 +678,7 @@
 <!-- Dashboard content is rendered by JS only after authentication -->
 <div class="dashboard" id="dashboard"></div>
 
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script>
 (function() {
     const PASS_HASH = 'd88a1030fc943736069d7cb44a01a031a263cacb0ab7cfa7b28eb7d54653bb44';
@@ -533,18 +687,101 @@
     const LOCKOUT_KEY = 'dash_lockout';
     const WEATHER_CACHE_KEY = 'dash_weather_cache';
     const NEWS_CACHE_KEY = 'dash_news_cache';
+    const TECH_NEWS_CACHE_KEY = 'dash_tech_news_cache';
     const MAX_ATTEMPTS = 5;
     const LOCKOUT_MS = 60000;
-    const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+    const CACHE_TTL = 10 * 60 * 1000;
+
+    // -- Robust Storage Wrapper --
+    const Storage = {
+        _available: null,
+
+        isAvailable: function() {
+            if (this._available !== null) return this._available;
+            try {
+                const testKey = '__storage_test__';
+                localStorage.setItem(testKey, 'test');
+                const result = localStorage.getItem(testKey);
+                localStorage.removeItem(testKey);
+                this._available = result === 'test';
+            } catch (e) {
+                this._available = false;
+            }
+            return this._available;
+        },
+
+        get: function(key, fallback) {
+            if (!this.isAvailable()) return fallback !== undefined ? fallback : null;
+            try {
+                const val = localStorage.getItem(key);
+                return val !== null ? val : (fallback !== undefined ? fallback : null);
+            } catch (e) {
+                console.warn('Storage read error for ' + key, e);
+                return fallback !== undefined ? fallback : null;
+            }
+        },
+
+        set: function(key, value) {
+            if (!this.isAvailable()) return false;
+            try {
+                localStorage.setItem(key, value);
+                // Verify write
+                const check = localStorage.getItem(key);
+                if (check !== value) {
+                    console.warn('Storage verification failed for ' + key);
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                console.warn('Storage write error for ' + key, e);
+                if (e.name === 'QuotaExceededError') {
+                    showStorageWarning('Storage is full. Some data may not be saved.');
+                }
+                return false;
+            }
+        },
+
+        getJSON: function(key, fallback) {
+            const val = this.get(key);
+            if (val === null) return fallback !== undefined ? fallback : null;
+            try {
+                return JSON.parse(val);
+            } catch (e) {
+                return fallback !== undefined ? fallback : null;
+            }
+        },
+
+        setJSON: function(key, value) {
+            return this.set(key, JSON.stringify(value));
+        },
+
+        remove: function(key) {
+            if (!this.isAvailable()) return;
+            try { localStorage.removeItem(key); } catch (e) {}
+        }
+    };
+
+    // Request persistent storage
+    if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().catch(function() {});
+    }
+
+    let storageWarningEl = null;
+    function showStorageWarning(msg) {
+        if (storageWarningEl) {
+            storageWarningEl.textContent = msg;
+            storageWarningEl.style.display = 'block';
+        }
+    }
 
     async function hashPassword(pw) {
         const data = new TextEncoder().encode(pw);
         const buf = await crypto.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        return Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
     }
 
     function isLoggedIn() {
-        return localStorage.getItem(SESSION_KEY) === 'true';
+        return Storage.get(SESSION_KEY) === 'true';
     }
 
     function isLockedOut() {
@@ -571,25 +808,81 @@
     }
 
     function getCached(key) {
-        try {
-            const cached = JSON.parse(localStorage.getItem(key));
-            if (cached && cached.data) return cached;
-        } catch {}
+        const cached = Storage.getJSON(key);
+        if (cached && cached.data) return cached;
         return null;
     }
 
     function setCache(key, data) {
-        localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
+        Storage.setJSON(key, { data: data, ts: Date.now() });
     }
 
     function isCacheFresh(cached) {
         return cached && (Date.now() - cached.ts) < CACHE_TTL;
     }
 
-    // ── Build dashboard DOM (only after auth) ──
+    // -- Swiss/Bern Holidays --
+    function computeEaster(year) {
+        const a = year % 19;
+        const b = Math.floor(year / 100);
+        const c = year % 100;
+        const d = Math.floor(b / 4);
+        const e = b % 4;
+        const f = Math.floor((b + 8) / 25);
+        const g = Math.floor((b - f + 1) / 3);
+        const h = (19 * a + b - d - g + 15) % 30;
+        const i = Math.floor(c / 4);
+        const k = c % 4;
+        const l = (32 + 2 * e + 2 * i - h - k) % 7;
+        const m = Math.floor((a + 11 * h + 22 * l) / 451);
+        const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+        const day = ((h + l - 7 * m + 114) % 31) + 1;
+        return new Date(year, month, day);
+    }
+
+    function addDays(date, days) {
+        const d = new Date(date);
+        d.setDate(d.getDate() + days);
+        return d;
+    }
+
+    function getBernHolidays(year) {
+        const easter = computeEaster(year);
+        const holidays = {};
+        const add = function(date, name) {
+            const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+            holidays[key] = name;
+        };
+
+        add(new Date(year, 0, 1), 'Neujahr');
+        add(new Date(year, 0, 2), 'Berchtoldstag');
+        add(addDays(easter, -2), 'Karfreitag');
+        add(addDays(easter, 0), 'Ostersonntag');
+        add(addDays(easter, 1), 'Ostermontag');
+        add(addDays(easter, 39), 'Auffahrt');
+        add(addDays(easter, 49), 'Pfingstsonntag');
+        add(addDays(easter, 50), 'Pfingstmontag');
+        add(new Date(year, 7, 1), 'Bundesfeiertag');
+        add(new Date(year, 11, 25), 'Weihnachten');
+        add(new Date(year, 11, 26), 'Stephanstag');
+
+        return holidays;
+    }
+
+    // -- Build dashboard DOM --
     function buildDashboardDOM() {
         const dashboard = document.getElementById('dashboard');
         dashboard.innerHTML = '';
+
+        // Storage warning
+        storageWarningEl = document.createElement('div');
+        storageWarningEl.className = 'storage-warning';
+        storageWarningEl.id = 'storageWarning';
+        dashboard.appendChild(storageWarningEl);
+
+        if (!Storage.isAvailable()) {
+            showStorageWarning('Local storage is not available. Your data (notes, todos) will not be saved between sessions. Check your browser privacy settings.');
+        }
 
         // Header
         const header = document.createElement('div');
@@ -621,7 +914,7 @@
         logoutBtn.className = 'btn-logout';
         logoutBtn.textContent = 'Sign out';
         logoutBtn.addEventListener('click', function() {
-            localStorage.removeItem(SESSION_KEY);
+            Storage.remove(SESSION_KEY);
             sessionStorage.removeItem(ATTEMPTS_KEY);
             location.reload();
         });
@@ -633,22 +926,31 @@
         const grid = document.createElement('div');
         grid.className = 'grid';
 
-        // News card (first — prominent position)
+        // News card
         const newsCard = document.createElement('div');
         newsCard.className = 'card card-news';
-        newsCard.innerHTML = '<div class="card-title">News</div><div id="newsContent"><p class="news-loading">Loading news...</p></div><div id="policeContent"></div>';
+        newsCard.innerHTML = '<div class="card-title">News</div>' +
+            '<div class="news-tabs" id="newsTabs">' +
+            '<button class="news-tab active" data-tab="news">News</button>' +
+            '<button class="news-tab" data-tab="tech">Tech</button>' +
+            '</div>' +
+            '<div id="newsPanel"><div id="newsContent"><p class="news-loading">Loading news...</p></div><div id="policeContent"></div></div>' +
+            '<div id="techPanel" style="display:none"><div id="techContent"><p class="news-loading">Loading tech news...</p></div></div>';
         grid.appendChild(newsCard);
 
         // Weather card
         const weatherCard = document.createElement('div');
         weatherCard.className = 'card card-weather';
-        weatherCard.innerHTML = '<div class="card-title">Weather · Bern</div><div id="weatherContent"><p class="weather-loading">Loading weather...</p></div>';
+        weatherCard.innerHTML = '<div class="card-title">Weather \u00b7 Bern</div><div id="weatherContent"><p class="weather-loading">Loading weather...</p></div>';
         grid.appendChild(weatherCard);
 
         // Calendar card
         const calCard = document.createElement('div');
         calCard.className = 'card card-calendar';
-        calCard.innerHTML = '<div class="card-title" id="calTitle">Calendar</div><div class="cal-grid" id="calGrid"></div>';
+        calCard.innerHTML = '<div class="card-title">Calendar</div>' +
+            '<div class="cal-nav"><button class="cal-nav-btn" id="calPrev">\u2039</button><span id="calTitle"></span><button class="cal-nav-btn" id="calNext">\u203a</button></div>' +
+            '<div class="cal-grid" id="calGrid"></div>' +
+            '<div class="cal-legend" id="calLegend"></div>';
         grid.appendChild(calCard);
 
         // Todos card
@@ -671,18 +973,12 @@
         todosCard.append(todoInputRow, todoList);
         grid.appendChild(todosCard);
 
-        // Notes card
+        // Notes card (Quill)
         const notesCard = document.createElement('div');
         notesCard.className = 'card card-notes';
-        notesCard.innerHTML = '<div class="card-title">Notes</div>';
-        const notesArea = document.createElement('textarea');
-        notesArea.className = 'notes-area';
-        notesArea.id = 'notesArea';
-        notesArea.placeholder = 'Write something...';
-        const notesSaved = document.createElement('div');
-        notesSaved.className = 'notes-saved';
-        notesSaved.id = 'notesSaved';
-        notesCard.append(notesArea, notesSaved);
+        notesCard.innerHTML = '<div class="card-title">Notes</div>' +
+            '<div class="notes-editor-wrapper"><div id="notesEditor"></div></div>' +
+            '<div class="notes-saved" id="notesSaved"></div>';
         grid.appendChild(notesCard);
 
         dashboard.appendChild(grid);
@@ -714,7 +1010,7 @@
         const pw = pwInput.value;
         const hash = await hashPassword(pw);
         if (hash === PASS_HASH) {
-            localStorage.setItem(SESSION_KEY, 'true');
+            Storage.set(SESSION_KEY, 'true');
             sessionStorage.removeItem(ATTEMPTS_KEY);
             sessionStorage.removeItem(LOCKOUT_KEY);
             showDashboard();
@@ -729,26 +1025,62 @@
         }
     });
 
-    // ── Widget logic (only runs after DOM is built) ──
+    // -- Widget logic --
+    let quillInstance = null;
+
     function initWidgets() {
-        buildCalendar();
+        initCalendar();
         loadTodos();
-        loadNotes();
+        initNotes();
         loadWeather();
         loadNews();
+        loadTechNews();
+        initNewsTabs();
+
+        // Force save on page unload
+        window.addEventListener('beforeunload', function() {
+            if (quillInstance) {
+                const contents = quillInstance.getContents();
+                Storage.setJSON('dash_notes', contents);
+            }
+        });
     }
 
-    // ── Calendar ──
-    function buildCalendar() {
+    // -- Calendar with navigation and holidays --
+    let calYear, calMonth;
+
+    function initCalendar() {
         const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
-        const today = now.getDate();
+        calYear = now.getFullYear();
+        calMonth = now.getMonth();
+        buildCalendar(calYear, calMonth);
 
-        document.getElementById('calTitle').textContent = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        document.getElementById('calPrev').addEventListener('click', function() {
+            calMonth--;
+            if (calMonth < 0) { calMonth = 11; calYear--; }
+            buildCalendar(calYear, calMonth);
+        });
+        document.getElementById('calNext').addEventListener('click', function() {
+            calMonth++;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            buildCalendar(calYear, calMonth);
+        });
+    }
+
+    function buildCalendar(year, month) {
+        const now = new Date();
+        const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+        const today = isCurrentMonth ? now.getDate() : -1;
+
+        const titleEl = document.getElementById('calTitle');
+        titleEl.textContent = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
         const grid = document.getElementById('calGrid');
+        grid.innerHTML = '';
 
-        ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d => {
+        const holidays = getBernHolidays(year);
+
+        ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(function(d) {
             const el = document.createElement('div');
             el.className = 'cal-header';
             el.textContent = d;
@@ -767,12 +1099,32 @@
             el.textContent = daysInPrev - i;
             grid.appendChild(el);
         }
+
+        const monthHolidays = [];
         for (let d = 1; d <= daysInMonth; d++) {
             const el = document.createElement('div');
-            el.className = 'cal-day' + (d === today ? ' today' : '');
+            const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            const holidayName = holidays[dateKey];
+            let cls = 'cal-day';
+            if (d === today) cls += ' today';
+            if (holidayName) cls += ' holiday';
+            el.className = cls;
             el.textContent = d;
+            el.style.position = 'relative';
+
+            if (holidayName) {
+                const dot = document.createElement('span');
+                dot.className = 'cal-holiday-dot';
+                el.appendChild(dot);
+                const tooltip = document.createElement('span');
+                tooltip.className = 'cal-holiday-tooltip';
+                tooltip.textContent = holidayName;
+                el.appendChild(tooltip);
+                monthHolidays.push({ day: d, name: holidayName });
+            }
             grid.appendChild(el);
         }
+
         const remaining = (7 - ((startDay + daysInMonth) % 7)) % 7;
         for (let i = 1; i <= remaining; i++) {
             const el = document.createElement('div');
@@ -780,16 +1132,30 @@
             el.textContent = i;
             grid.appendChild(el);
         }
+
+        // Legend
+        const legend = document.getElementById('calLegend');
+        legend.innerHTML = '';
+        if (monthHolidays.length > 0) {
+            monthHolidays.forEach(function(h) {
+                const item = document.createElement('div');
+                item.className = 'cal-legend-item';
+                item.innerHTML = '<span class="cal-legend-dot"></span><span>' + h.day + '. ' + h.name + '</span>';
+                legend.appendChild(item);
+            });
+        }
     }
 
-    // ── Todos ──
+    // -- Todos --
     const TODOS_KEY = 'dash_todos';
 
     function getTodos() {
-        try { return JSON.parse(localStorage.getItem(TODOS_KEY)) || []; }
-        catch { return []; }
+        return Storage.getJSON(TODOS_KEY, []);
     }
-    function saveTodos(todos) { localStorage.setItem(TODOS_KEY, JSON.stringify(todos)); }
+
+    function saveTodos(todos) {
+        Storage.setJSON(TODOS_KEY, todos);
+    }
 
     function renderTodos() {
         const list = document.getElementById('todoList');
@@ -802,20 +1168,20 @@
             list.appendChild(empty);
             return;
         }
-        todos.forEach((todo, i) => {
+        todos.forEach(function(todo, i) {
             const li = document.createElement('li');
             li.className = 'todo-item' + (todo.done ? ' done' : '');
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.checked = todo.done;
-            cb.addEventListener('change', () => { toggleTodo(i); });
+            cb.addEventListener('change', function() { toggleTodo(i); });
             const span = document.createElement('span');
             span.className = 'todo-text';
             span.textContent = todo.text;
             const del = document.createElement('button');
             del.className = 'todo-delete';
             del.textContent = '\u00d7';
-            del.addEventListener('click', () => { deleteTodo(i); });
+            del.addEventListener('click', function() { deleteTodo(i); });
             li.append(cb, span, del);
             list.appendChild(li);
         });
@@ -828,41 +1194,94 @@
         saveTodos(todos);
         renderTodos();
     }
-    function toggleTodo(i) { const t = getTodos(); t[i].done = !t[i].done; saveTodos(t); renderTodos(); }
-    function deleteTodo(i) { const t = getTodos(); t.splice(i, 1); saveTodos(t); renderTodos(); }
+
+    function toggleTodo(i) {
+        const t = getTodos();
+        t[i].done = !t[i].done;
+        saveTodos(t);
+        renderTodos();
+    }
+
+    function deleteTodo(i) {
+        const t = getTodos();
+        t.splice(i, 1);
+        saveTodos(t);
+        renderTodos();
+    }
 
     function loadTodos() {
         renderTodos();
-        document.getElementById('todoAdd').addEventListener('click', () => {
+        document.getElementById('todoAdd').addEventListener('click', function() {
             const input = document.getElementById('todoInput');
             addTodo(input.value);
             input.value = '';
             input.focus();
         });
-        document.getElementById('todoInput').addEventListener('keydown', (e) => {
+        document.getElementById('todoInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') { addTodo(e.target.value); e.target.value = ''; }
         });
     }
 
-    // ── Notes ──
+    // -- Notes (Quill rich text) --
     const NOTES_KEY = 'dash_notes';
-    let saveTimeout;
+    let notesSaveTimeout;
 
-    function loadNotes() {
-        const area = document.getElementById('notesArea');
-        area.value = localStorage.getItem(NOTES_KEY) || '';
-        area.addEventListener('input', () => {
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                localStorage.setItem(NOTES_KEY, area.value);
-                const saved = document.getElementById('notesSaved');
-                saved.textContent = 'Saved';
-                setTimeout(() => saved.textContent = '', 1500);
+    function initNotes() {
+        quillInstance = new Quill('#notesEditor', {
+            theme: 'snow',
+            placeholder: 'Write something...',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'header': [1, 2, 3, false] }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                    ['blockquote', 'code-block'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    ['link'],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Load saved content
+        const saved = Storage.getJSON(NOTES_KEY);
+        if (saved) {
+            if (saved.ops) {
+                // Quill Delta format
+                quillInstance.setContents(saved);
+            } else if (typeof saved === 'string') {
+                // Legacy plain text
+                quillInstance.setText(saved);
+            }
+        } else {
+            // Check for legacy plain text format
+            const legacyText = Storage.get(NOTES_KEY);
+            if (legacyText && legacyText.trim()) {
+                quillInstance.setText(legacyText);
+            }
+        }
+
+        quillInstance.on('text-change', function() {
+            clearTimeout(notesSaveTimeout);
+            notesSaveTimeout = setTimeout(function() {
+                const contents = quillInstance.getContents();
+                const success = Storage.setJSON(NOTES_KEY, contents);
+                const savedEl = document.getElementById('notesSaved');
+                if (success) {
+                    savedEl.textContent = 'Saved';
+                } else {
+                    savedEl.textContent = 'Failed to save!';
+                    savedEl.style.color = '#c00';
+                }
+                setTimeout(function() {
+                    savedEl.textContent = '';
+                    savedEl.style.color = '#aaa';
+                }, 1500);
             }, 500);
         });
     }
 
-    // ── Weather ──
+    // -- Weather --
     function renderWeatherData(container, weatherData) {
         const temp = Math.round(weatherData.temperature_2m);
         const humidity = weatherData.relative_humidity_2m;
@@ -881,21 +1300,19 @@
     async function loadWeather() {
         const container = document.getElementById('weatherContent');
 
-        // Show cached data instantly
         const cached = getCached(WEATHER_CACHE_KEY);
         if (cached) {
             renderWeatherData(container, cached.data);
-            if (isCacheFresh(cached)) return; // still fresh, skip fetch
+            if (isCacheFresh(cached)) return;
         }
 
-        // Fetch fresh data in background
         try {
             const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=46.9481&longitude=7.4474&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Europe/Zurich');
             const data = await res.json();
             const c = data.current;
             setCache(WEATHER_CACHE_KEY, c);
             renderWeatherData(container, c);
-        } catch {
+        } catch (e) {
             if (!cached) container.innerHTML = '<p class="weather-loading">Unable to load weather</p>';
         }
     }
@@ -924,23 +1341,7 @@
         return 'Unknown';
     }
 
-    // ── News ──
-    function parseRSSItems(xml) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(xml, 'text/xml');
-        const items = doc.querySelectorAll('item');
-        const results = [];
-        items.forEach(item => {
-            const title = item.querySelector('title')?.textContent || '';
-            const link = item.querySelector('link')?.textContent || '#';
-            const pubDate = item.querySelector('pubDate')?.textContent || '';
-            const desc = item.querySelector('description')?.textContent || '';
-            const source = item.querySelector('source')?.textContent || '';
-            results.push({ title, link, pubDate, desc, source });
-        });
-        return results;
-    }
-
+    // -- News --
     function stripHTML(html) {
         const tmp = document.createElement('div');
         tmp.innerHTML = html;
@@ -963,7 +1364,7 @@
         const ol = document.createElement('ol');
         ol.className = 'news-list';
         ol.start = startNum || 1;
-        items.slice(0, maxItems).forEach(item => {
+        items.slice(0, maxItems).forEach(function(item) {
             const li = document.createElement('li');
             li.className = 'news-item';
 
@@ -985,6 +1386,12 @@
 
             const meta = document.createElement('div');
             meta.className = 'news-meta';
+            if (item.source) {
+                const sourceTag = document.createElement('span');
+                sourceTag.className = 'news-source-tag';
+                sourceTag.textContent = item.source;
+                meta.appendChild(sourceTag);
+            }
             if (item.pubDate) {
                 const time = document.createElement('span');
                 time.textContent = timeAgo(item.pubDate);
@@ -996,11 +1403,11 @@
         container.appendChild(ol);
     }
 
-    // JSONP fetch — bypasses CORS by loading via <script> tag
+    // JSONP fetch
     function fetchJSONP(url) {
-        return new Promise((resolve, reject) => {
+        return new Promise(function(resolve, reject) {
             const cbName = '_jsonp_' + Math.random().toString(36).slice(2);
-            const timer = setTimeout(() => {
+            const timer = setTimeout(function() {
                 delete window[cbName];
                 if (script.parentNode) script.parentNode.removeChild(script);
                 reject(new Error('timeout'));
@@ -1027,16 +1434,32 @@
         try {
             const data = await fetchJSONP('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl));
             if (data.status !== 'ok' || !data.items) return null;
-            return data.items.map(i => ({
-                title: i.title || '',
-                link: i.link || '#',
-                pubDate: i.pubDate || '',
-                desc: i.description || '',
-                source: i.author || ''
-            }));
-        } catch {
+            return data.items.map(function(i) {
+                return {
+                    title: i.title || '',
+                    link: i.link || '#',
+                    pubDate: i.pubDate || '',
+                    desc: i.description || '',
+                    source: i.author || ''
+                };
+            });
+        } catch (e) {
             return null;
         }
+    }
+
+    // News tabs
+    function initNewsTabs() {
+        const tabs = document.querySelectorAll('.news-tab');
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                tabs.forEach(function(t) { t.classList.remove('active'); });
+                tab.classList.add('active');
+                const target = tab.getAttribute('data-tab');
+                document.getElementById('newsPanel').style.display = target === 'news' ? 'block' : 'none';
+                document.getElementById('techPanel').style.display = target === 'tech' ? 'block' : 'none';
+            });
+        });
     }
 
     function renderNewsSections(newsContainer, policeContainer, newsData) {
@@ -1046,7 +1469,7 @@
             sectionTitle.className = 'news-section-title';
             sectionTitle.textContent = 'Aktuell';
             newsContainer.appendChild(sectionTitle);
-            renderNewsItems(newsContainer, newsData.bernItems, 6, 1);
+            renderNewsItems(newsContainer, newsData.bernItems, 8, 1);
         } else {
             newsContainer.innerHTML = '<p class="news-loading">Unable to load news</p>';
         }
@@ -1057,8 +1480,8 @@
             sectionTitle.className = 'news-section-title';
             sectionTitle.textContent = 'Regional';
             policeContainer.appendChild(sectionTitle);
-            const startNum = Math.min((newsData.bernItems || []).length, 6) + 1;
-            renderNewsItems(policeContainer, newsData.regionalItems, 4, startNum);
+            const startNum = Math.min((newsData.bernItems || []).length, 8) + 1;
+            renderNewsItems(policeContainer, newsData.regionalItems, 5, startNum);
         }
     }
 
@@ -1066,14 +1489,12 @@
         const newsContainer = document.getElementById('newsContent');
         const policeContainer = document.getElementById('policeContent');
 
-        // Show cached news instantly
         const cached = getCached(NEWS_CACHE_KEY);
         if (cached) {
             renderNewsSections(newsContainer, policeContainer, cached.data);
             if (isCacheFresh(cached)) return;
         }
 
-        // Fetch fresh data
         const [bernItems, regionalItems] = await Promise.all([
             fetchRss2jsonJSONP('https://www.nzz.ch/recent.rss'),
             fetchRss2jsonJSONP('https://www.nzz.ch/zuerich.rss')
@@ -1084,6 +1505,57 @@
             setCache(NEWS_CACHE_KEY, newsData);
         }
         renderNewsSections(newsContainer, policeContainer, newsData);
+    }
+
+    // Tech news
+    function renderTechNews(container, techData) {
+        container.innerHTML = '';
+        if (techData.length === 0) {
+            container.innerHTML = '<p class="news-loading">Unable to load tech news</p>';
+            return;
+        }
+
+        // Merge and sort by date
+        const allItems = techData.flat().sort(function(a, b) {
+            return new Date(b.pubDate) - new Date(a.pubDate);
+        });
+
+        renderNewsItems(container, allItems, 12, 1);
+    }
+
+    async function loadTechNews() {
+        const container = document.getElementById('techContent');
+
+        const cached = getCached(TECH_NEWS_CACHE_KEY);
+        if (cached) {
+            renderTechNews(container, cached.data);
+            if (isCacheFresh(cached)) return;
+        }
+
+        const feeds = [
+            'https://techcrunch.com/feed/',
+            'https://feeds.arstechnica.com/arstechnica/index'
+        ];
+
+        const results = await Promise.all(feeds.map(function(url) {
+            return fetchRss2jsonJSONP(url).then(function(items) {
+                if (!items) return [];
+                return items.map(function(item) {
+                    // Determine source from URL
+                    let source = 'Tech';
+                    if (url.indexOf('techcrunch') !== -1) source = 'TechCrunch';
+                    else if (url.indexOf('arstechnica') !== -1) source = 'Ars Technica';
+                    item.source = source;
+                    return item;
+                });
+            });
+        }));
+
+        const techData = results.filter(function(r) { return r.length > 0; });
+        if (techData.length > 0) {
+            setCache(TECH_NEWS_CACHE_KEY, techData);
+        }
+        renderTechNews(container, techData);
     }
 
 })();
