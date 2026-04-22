@@ -24,7 +24,7 @@ No external JS deps on any live page (Three.js only lives on archived `/archive/
 - **Never add** npm, build tools, TypeScript, or a backend
 - **Dashboard is self-contained** — CSS and JS stay embedded inside dashboard.html
 - Photo paths are explicit with subfolder: `images/digital/*`, `images/analog/*`, `images/iPhone/*`, `images/*` (root). Arrays live in `work.html` (split into DIGITAL/ANALOG/IPHONE/RANDOM) and `universe.html` (flat IMAGES) — keep in sync when adding photos
-- `work.html` Random folder = only files directly in `images/`, not subfolders. Overview = Digital + Analog + iPhone + Random
+- `work.html` Random folder = only files directly in `images/`, not subfolders. Overview = Digital + Analog + iPhone
 - **RSS uses JSONP** on dashboard — do NOT switch to fetch() without a proxy (NZZ blocks CORS)
 
 ## Key Facts
