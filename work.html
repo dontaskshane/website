@@ -135,50 +135,69 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 18px 16px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px 12px;
   }
-    .card {
+  .card {
     display: flex; flex-direction: column;
     cursor: pointer;
     border-radius: 6px;
     content-visibility: auto;
-    contain-intrinsic-size: 280px 240px;
+    contain-intrinsic-size: 220px 200px;
   }
   .thumb {
     width: 100%;
-    aspect-ratio: 4 / 3;
-    border-radius: 4px;
+    aspect-ratio: 3 / 2;
+    border-radius: 6px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.04);
-    transition: box-shadow .2s ease;
+    transition: box-shadow .2s ease, transform .2s ease;
     position: relative;
     contain: layout paint;
   }
+  /* Skeleton: two-layer — base colour + animated shimmer sweep */
   .thumb .skeleton {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, #e8e8e8 25%, #d8d8d8 50%, #e8e8e8 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 4px;
+    position: absolute; inset: 0;
+    border-radius: 6px;
+    overflow: hidden;
   }
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+  .thumb .skeleton::before {
+    content: '';
+    display: block;
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #ece8e1 0%, #dedad3 100%);
+  }
+  .thumb .skeleton::after {
+    content: '';
+    display: block;
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgba(255,255,255,0.55) 50%,
+      transparent 65%
+    );
+    background-size: 250% 100%;
+    animation: sweep 1.8s ease-in-out infinite;
+  }
+  @keyframes sweep {
+    0%   { background-position: 150% 0; }
+    100% { background-position: -50% 0; }
   }
   .thumb img {
+    position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover;
     display: block;
     user-select: none;
     -webkit-user-drag: none;
     opacity: 0;
-    transition: opacity .3s ease;
+    transition: opacity .35s ease;
   }
   .thumb img.loaded { opacity: 1; }
   .card:hover .thumb {
-    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.35), 0 8px 20px -6px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.4), 0 10px 24px -6px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
   }
   .caption {
     margin-top: 8px;
@@ -212,11 +231,35 @@
       grid-template-columns: 1fr;
       grid-template-rows: auto 1fr;
       top: 50px; left: 10px; right: 10px; bottom: 10px;
-      gap: 10px;
+      gap: 8px;
     }
-    .sidebar { max-height: 30vh; padding: 12px 8px; }
-    .pane { padding: 18px 16px 28px; }
-    .grid { grid-template-columns: repeat(2, 1fr); gap: 14px 10px; }
+    /* Compact horizontal tab strip */
+    .sidebar {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .sidebar::-webkit-scrollbar { display: none; }
+    .brand { display: none; }
+    .sec-label { display: none; }
+    /* Hide Instagram link on mobile */
+    .sidebar a[target="_blank"] { display: none; }
+    .nav-item {
+      padding: 6px 14px;
+      border-radius: 20px;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+    .nav-item .ico { display: none; }
+    .pane { padding: 16px 14px 24px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 12px 10px; }
   }
 </style>
 </head>
