@@ -56,7 +56,10 @@
     object-fit: cover;
     user-select: none;
     -webkit-user-drag: none;
+    opacity: 0;
+    transition: opacity .3s ease;
   }
+  .tile img.loaded { opacity: 1; }
 
   /* Invisible back — logo top-left, subtle, only visible on hover */
   .back {
@@ -114,13 +117,19 @@
   'use strict';
 
   const IMAGES = [
-    'images/digital/DSC04133.JPG','images/digital/R0000031.JPG','images/digital/R0000994.JPG',
-    'images/digital/R0001088.JPG','images/digital/R0001099.JPG','images/digital/R0001174.JPG',
-    'images/analog/000010610005.jpg','images/analog/000012710015.jpg',
-    'images/analog/dedeAA001.jpg','images/analog/dedeAA006A.jpg','images/analog/dedeAA007A.jpg',
-    'images/analog/dedeAA012A.jpg','images/analog/dedeAA013A.jpg','images/analog/dedeAA016.jpg',
-    'images/analog/dedeAA020.jpg','images/analog/dedeAA024.jpg','images/analog/dedeAA034.jpg',
-    'images/analog/dedeAA038.jpg',
+    'images/digital/altstadt.JPG','images/digital/american_psycho.JPG','images/digital/axt.JPG',
+    'images/digital/bike.JPG','images/digital/close.JPG','images/digital/dyson.jpg',
+    'images/digital/floor.jpeg','images/digital/gucci.jpg','images/digital/gun.JPG',
+    'images/digital/karussell.JPG','images/digital/mask.JPG','images/digital/people.JPG',
+    'images/digital/plants.JPG','images/digital/restaurant.JPG','images/digital/rims.JPG',
+    'images/digital/rolex.JPG','images/digital/spiderweb.JPG','images/digital/usm.JPG',
+    'images/digital/wein.JPG','images/digital/work.JPG',
+    'images/analog/bali.jpg','images/analog/bar.jpg','images/analog/beach.jpg',
+    'images/analog/breaking_bad.jpg','images/analog/dive.jpg','images/analog/ducati.jpg',
+    'images/analog/fire.jpg','images/analog/fish.jpg','images/analog/forrest.JPG',
+    'images/analog/gurtenfestival.jpg','images/analog/lamborghini.jpg','images/analog/loeb.jpg',
+    'images/analog/music.jpg','images/analog/ocean.jpg','images/analog/police.jpg',
+    'images/analog/radiohead.jpg','images/analog/rome.jpg','images/analog/wien.JPG',
     'images/iPhone/amboss.jpeg','images/iPhone/asics.jpeg','images/iPhone/audi.jpeg',
     'images/iPhone/bahnhof.jpeg','images/iPhone/bikes.jpeg','images/iPhone/bugatti.jpeg',
     'images/iPhone/bw.jpeg','images/iPhone/camper.jpeg','images/iPhone/dino.jpeg',
@@ -131,17 +140,7 @@
     'images/iPhone/sardinien.jpeg','images/iPhone/schlumpf.JPG','images/iPhone/schnitzel.jpeg',
     'images/iPhone/sunset.jpeg','images/iPhone/tmax.jpeg','images/iPhone/vapormax.jpeg',
     'images/iPhone/versace.jpeg','images/iPhone/vitra.jpeg','images/iPhone/vully.jpeg',
-    'images/iPhone/wien.JPG','images/iPhone/yb.jpeg',
-    'images/DSC04066.JPG','images/DSC04133.JPG',
-    'images/IMG_0191.jpeg','images/IMG_0206.jpeg','images/IMG_1921.jpeg',
-    'images/IMG_2125.JPG','images/IMG_2287.jpeg','images/IMG_2441.jpeg',
-    'images/IMG_2659.jpeg','images/IMG_2836.jpeg',
-    'images/R0000188.JPG','images/R0000229.JPG','images/dedeAA018A.jpg',
-    'images/img_1.JPG','images/img_2.jpeg','images/img_3.jpeg','images/img_4.jpeg',
-    'images/img_5.jpeg','images/img_6.jpeg','images/img_7.JPG','images/img_8.JPG',
-    'images/img_9.JPG','images/img_10.JPG','images/img_11.jpeg','images/img_12.jpg',
-    'images/img_13.jpg','images/img_14.jpg','images/img_15.jpg','images/img_16.jpeg',
-    'images/img_17.jpeg'
+    'images/iPhone/wien.JPG','images/iPhone/yb.jpeg'
   ];
 
   const world = document.getElementById('world');
@@ -193,6 +192,7 @@
     img.decoding = 'async';
     img.alt = '';
     img.draggable = false;
+    img.dataset.src = name; // Store src in data attribute
     img.onload = () => {
       const r = img.naturalWidth / img.naturalHeight;
       let w, h;
@@ -201,8 +201,8 @@
       else       { h = base; w = base * r; }
       tile.style.width  = Math.round(w) + 'px';
       tile.style.height = Math.round(h) + 'px';
+      img.classList.add('loaded');
     };
-    img.src = name;
     tile.appendChild(img);
 
     tile.addEventListener('click', (e) => {
@@ -213,6 +213,23 @@
 
     world.appendChild(tile);
   });
+
+  // Intersection Observer for lazy loading
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          delete img.dataset.src;
+          observer.unobserve(img);
+        }
+      }
+    });
+  }, { rootMargin: '50px' });
+
+  // Observe all images
+  document.querySelectorAll('.tile img').forEach(img => observer.observe(img));
 
   // --- Pan / Zoom ---
   let tx = 0, ty = 0, tz = 1;

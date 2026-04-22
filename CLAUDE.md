@@ -12,7 +12,7 @@
 | `dashboard.html` | Private password-protected personal dashboard (unchanged) |
 | `old/` | Archived previous masonry gallery (`old/index.html`, `old/styles.css`) |
 | `archive/2/`, `archive/3/`, `archive/motion.html` | Archived experimental sites + retired Motion page |
-| `images/` | photos + logo; organised into `images/digital/` (6), `images/analog/` (12), `images/iPhone/` (33) and root (30) |
+| `images/` | photos + logo; organised into `images/digital/` (20), `images/analog/` (18), `images/iPhone/` (33) and root (1) |
 
 ## Stack
 **Vanilla HTML5 / CSS3 / ES6+ JS only.** No npm, no build tools, no frameworks, no backend.
