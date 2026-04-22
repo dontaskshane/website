@@ -150,6 +150,19 @@
     overflow: hidden;
     background: rgba(0, 0, 0, 0.04);
     transition: box-shadow .2s ease;
+    position: relative;
+  }
+  .thumb .skeleton {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #e8e8e8 25%, #d8d8d8 50%, #e8e8e8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
   .thumb img {
     width: 100%; height: 100%;
@@ -157,7 +170,10 @@
     display: block;
     user-select: none;
     -webkit-user-drag: none;
+    opacity: 0;
+    transition: opacity .3s ease;
   }
+  .thumb img.loaded { opacity: 1; }
   .card:hover .thumb {
     box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.35), 0 8px 20px -6px rgba(0, 0, 0, 0.15);
   }
@@ -362,7 +378,7 @@
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML =
-        '<div class="thumb"><img loading="lazy" src="' + src + '" alt=""></div>' +
+        '<div class="thumb"><div class="skeleton"></div><img loading="lazy" src="' + src + '" alt="" onload="this.classList.add(\'loaded\'); this.previousElementSibling.style.display=\'none\';"></div>' +
         '<div class="caption">' + basename(src) + '</div>';
       card.addEventListener('click', () => openLb(i));
       grid.appendChild(card);

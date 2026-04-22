@@ -45,10 +45,24 @@
     transition: box-shadow .3s ease, transform .3s ease;
     user-select: none;
     -webkit-user-drag: none;
+    border-radius: 4px;
+    overflow: hidden;
   }
   .tile:hover {
     box-shadow: 0 10px 40px -4px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.35);
     z-index: 2;
+  }
+  .tile .skeleton {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #2a2a2a 25%, #1a1a1a 50%, #2a2a2a 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
   .tile img {
     display: block;
@@ -58,6 +72,7 @@
     -webkit-user-drag: none;
     opacity: 0;
     transition: opacity .3s ease;
+    border-radius: 4px;
   }
   .tile img.loaded { opacity: 1; }
 
@@ -187,6 +202,11 @@
     tile.style.top  = p.y + 'px';
     tile.style.transform = `translate(-50%, -50%) rotate(${p.rot}deg)`;
 
+    // Skeleton placeholder
+    const skeleton = document.createElement('div');
+    skeleton.className = 'skeleton';
+    tile.appendChild(skeleton);
+
     const img = document.createElement('img');
     img.loading = 'lazy';
     img.decoding = 'async';
@@ -202,6 +222,7 @@
       tile.style.width  = Math.round(w) + 'px';
       tile.style.height = Math.round(h) + 'px';
       img.classList.add('loaded');
+      skeleton.style.display = 'none'; // Hide skeleton when loaded
     };
     tile.appendChild(img);
 
@@ -226,7 +247,7 @@
         }
       }
     });
-  }, { rootMargin: '50px' });
+  }, { rootMargin: '200px' }); // Increased margin for smoother panning
 
   // Observe all images
   document.querySelectorAll('.tile img').forEach(img => observer.observe(img));
@@ -360,6 +381,21 @@
   rouse();
 
   centerView();
+
+  // Preload images near the initial center for instant feedback
+  const preloadDistance = 1000; // Distance from center to preload
+  document.querySelectorAll('.tile img').forEach((img, i) => {
+    const tile = img.parentElement;
+    const rect = tile.getBoundingClientRect();
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const dist = Math.hypot(rect.left + rect.width/2 - centerX, rect.top + rect.height/2 - centerY);
+    if (dist < preloadDistance && img.dataset.src) {
+      img.src = img.dataset.src;
+      delete img.dataset.src;
+      observer.unobserve(img);
+    }
+  });
 
   document.addEventListener('gesturestart', e => e.preventDefault());
 })();
