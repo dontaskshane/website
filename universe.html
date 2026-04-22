@@ -21,6 +21,8 @@
   #stage {
     position: fixed; inset: 0;
     overflow: hidden;
+    --mx: 50%;
+    --my: 50%;
   }
   /* Subtle radial depth — the "universe" feel */
   #stage::before {
@@ -30,27 +32,76 @@
     pointer-events: none;
     z-index: 0;
   }
+  /* Pixelated ambient canvas — slow-drifting low-res noise */
+  #bg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    pointer-events: none;
+    opacity: 0.09;
+    mix-blend-mode: screen;
+    z-index: 0;
+  }
+  /* Cursor spotlight — very faint bloom under the pointer */
+  #spotlight {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background: radial-gradient(260px circle at var(--mx) var(--my),
+                                rgba(180, 200, 255, 0.06) 0%,
+                                rgba(180, 200, 255, 0.02) 40%,
+                                transparent 70%);
+    z-index: 1;
+    transition: opacity .4s ease;
+  }
+  @media (hover: none) { #spotlight { display: none; } }
   #world {
     position: absolute; left: 0; top: 0;
     width: 1px; height: 1px;
     transform-origin: 0 0;
     will-change: transform;
-    z-index: 1;
+    z-index: 2;
   }
   .tile {
     position: absolute;
     background: #0a0a0a;
     box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.04);
     cursor: pointer;
-    transition: box-shadow .3s ease, transform .3s ease;
+    transition: box-shadow .35s cubic-bezier(.2,.8,.2,1),
+                transform .35s cubic-bezier(.2,.8,.2,1),
+                opacity .5s ease;
     user-select: none;
     -webkit-user-drag: none;
     border-radius: 4px;
     overflow: hidden;
+    transform-style: preserve-3d;
   }
   .tile:hover {
-    box-shadow: 0 10px 40px -4px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.35);
-    z-index: 2;
+    box-shadow: 0 14px 48px -4px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.4);
+    z-index: 3;
+  }
+
+  /* Zoom indicator pill */
+  #zoomPill {
+    position: fixed; bottom: 20px; right: 20px; z-index: 10;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.82);
+    font: 500 11px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    letter-spacing: 0.04em;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .35s ease, transform .35s ease;
+    pointer-events: none;
+    user-select: none;
+  }
+  #zoomPill.show {
+    opacity: 0.85;
+    transform: translateY(0);
   }
   .tile .skeleton {
     position: absolute;
@@ -118,12 +169,16 @@
 <body class="idle">
 
   <div id="stage">
+    <canvas id="bg"></canvas>
+    <div id="spotlight"></div>
     <div id="world"></div>
   </div>
 
   <a href="index.html" class="back" aria-label="Home">
     <img src="images/logo_sw.png" alt="">
   </a>
+
+  <div id="zoomPill">100%</div>
 
   <div id="lb"><img id="lbimg" alt=""></div>
 
@@ -200,7 +255,9 @@
     const p = placements[i];
     tile.style.left = p.x + 'px';
     tile.style.top  = p.y + 'px';
-    tile.style.transform = `translate(-50%, -50%) rotate(${p.rot}deg)`;
+    const baseTransform = `translate(-50%, -50%) rotate(${p.rot}deg)`;
+    tile.dataset.base = baseTransform;
+    tile.style.transform = baseTransform;
 
     // Skeleton placeholder
     const skeleton = document.createElement('div');
@@ -264,16 +321,50 @@
 
   function apply(){
     world.style.transform = `translate(${tx}px, ${ty}px) scale(${tz})`;
+    if (typeof scheduleDepth === 'function') scheduleDepth();
   }
 
   window.addEventListener('resize', apply);
 
+  // --- Zoom indicator pill ---
+  const zoomPill = document.getElementById('zoomPill');
+  let zoomPillT;
+  function showZoomPill(){
+    zoomPill.textContent = Math.round(tz * 100) + '%';
+    zoomPill.classList.add('show');
+    clearTimeout(zoomPillT);
+    zoomPillT = setTimeout(() => zoomPill.classList.remove('show'), 1400);
+  }
+
+  // --- Inertia ---
+  let vx = 0, vy = 0;           // velocity px/ms
+  let lastMoveT = 0, lastMoveX = 0, lastMoveY = 0;
+  let inertiaRAF = null;
+  function stopInertia(){ if (inertiaRAF){ cancelAnimationFrame(inertiaRAF); inertiaRAF = null; } }
+  function runInertia(){
+    const friction = 0.92;
+    let lastT = performance.now();
+    function tick(now){
+      const dt = now - lastT; lastT = now;
+      tx += vx * dt;
+      ty += vy * dt;
+      vx *= friction; vy *= friction;
+      apply();
+      if (Math.hypot(vx, vy) > 0.02) inertiaRAF = requestAnimationFrame(tick);
+      else inertiaRAF = null;
+    }
+    inertiaRAF = requestAnimationFrame(tick);
+  }
+
   let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
   let justDragged = false, dragDist = 0;
   stage.addEventListener('mousedown', (e) => {
+    stopInertia();
     dragging = true; dragDist = 0;
     sx = e.clientX; sy = e.clientY;
     ox = tx; oy = ty;
+    vx = vy = 0;
+    lastMoveT = performance.now(); lastMoveX = e.clientX; lastMoveY = e.clientY;
     document.body.classList.add('dragging');
   });
   window.addEventListener('mousemove', (e) => {
@@ -281,6 +372,11 @@
     const dx = e.clientX - sx, dy = e.clientY - sy;
     dragDist = Math.max(dragDist, Math.hypot(dx, dy));
     tx = ox + dx; ty = oy + dy;
+    const now = performance.now();
+    const dt = Math.max(1, now - lastMoveT);
+    vx = (e.clientX - lastMoveX) / dt;
+    vy = (e.clientY - lastMoveY) / dt;
+    lastMoveT = now; lastMoveX = e.clientX; lastMoveY = e.clientY;
     apply();
   });
   window.addEventListener('mouseup', () => {
@@ -289,10 +385,12 @@
     document.body.classList.remove('dragging');
     justDragged = dragDist > 4;
     setTimeout(() => justDragged = false, 80);
+    if (Math.hypot(vx, vy) > 0.15) runInertia();
   });
 
   stage.addEventListener('wheel', (e) => {
     e.preventDefault();
+    stopInertia();
     const f = e.deltaY < 0 ? 1.12 : 1/1.12;
     const newZ = Math.max(MIN_Z, Math.min(MAX_Z, tz * f));
     const mx = e.clientX, my = e.clientY;
@@ -300,16 +398,20 @@
     ty = my - (my - ty) * (newZ / tz);
     tz = newZ;
     apply();
+    showZoomPill();
   }, { passive: false });
 
   let touches = {};
   stage.addEventListener('touchstart', (e) => {
+    stopInertia();
     for (const t of e.changedTouches){
       touches[t.identifier] = { x: t.clientX, y: t.clientY };
     }
     if (Object.keys(touches).length === 1){
       const t = e.touches[0]; sx = t.clientX; sy = t.clientY; ox = tx; oy = ty;
       dragging = true; dragDist = 0;
+      vx = vy = 0;
+      lastMoveT = performance.now(); lastMoveX = t.clientX; lastMoveY = t.clientY;
     }
   }, { passive: false });
 
@@ -321,6 +423,11 @@
       const dx = t.clientX - sx, dy = t.clientY - sy;
       dragDist = Math.max(dragDist, Math.hypot(dx, dy));
       tx = ox + dx; ty = oy + dy;
+      const now = performance.now();
+      const dt = Math.max(1, now - lastMoveT);
+      vx = (t.clientX - lastMoveX) / dt;
+      vy = (t.clientY - lastMoveY) / dt;
+      lastMoveT = now; lastMoveX = t.clientX; lastMoveY = t.clientY;
       apply();
     } else if (e.touches.length === 2){
       const [a, b] = [e.touches[0], e.touches[1]];
@@ -335,6 +442,7 @@
       ty = cy - (cy - ty) * (newZ / tz);
       tz = newZ;
       apply();
+      showZoomPill();
       touches[a.identifier] = { x: a.clientX, y: a.clientY };
       touches[b.identifier] = { x: b.clientX, y: b.clientY };
     }
@@ -346,7 +454,37 @@
       dragging = false;
       justDragged = dragDist > 6;
       setTimeout(() => justDragged = false, 100);
+      if (Math.hypot(vx, vy) > 0.15) runInertia();
     }
+  });
+
+  // --- Cursor spotlight — update CSS vars (cheap, no layout) ---
+  window.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    stage.style.setProperty('--mx', e.clientX + 'px');
+    stage.style.setProperty('--my', e.clientY + 'px');
+  }, { passive: true });
+
+  // --- Tile tilt on hover — subtle 3° based on cursor position ---
+  document.querySelectorAll('.tile').forEach(tile => {
+    tile.addEventListener('pointerenter', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      tile.style.transition = 'box-shadow .35s cubic-bezier(.2,.8,.2,1), opacity .5s ease';
+    });
+    tile.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const r = tile.getBoundingClientRect();
+      const nx = ((e.clientX - r.left) / r.width) - 0.5;
+      const ny = ((e.clientY - r.top) / r.height) - 0.5;
+      const rx = (-ny * 6).toFixed(2);
+      const ry = (nx * 6).toFixed(2);
+      const base = tile.dataset.base || '';
+      tile.style.transform = `${base} perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.04)`;
+    });
+    tile.addEventListener('pointerleave', () => {
+      tile.style.transition = '';
+      tile.style.transform = tile.dataset.base || '';
+    });
   });
 
   // Lightbox
@@ -396,6 +534,71 @@
       observer.unobserve(img);
     }
   });
+
+  // --- Pixelated ambient canvas ---
+  // Low-res per-pixel noise blended with a drifting sine field; pauses when tab hidden.
+  (function initBackground(){
+    const bg = document.getElementById('bg');
+    const BW = 160, BH = 100;
+    bg.width = BW; bg.height = BH;
+    const ctx = bg.getContext('2d');
+    const img = ctx.createImageData(BW, BH);
+    const data = img.data;
+    let t = 0;
+    let running = true;
+
+    function frame(){
+      if (!running){ return; }
+      t += 0.012;
+      const sinT = Math.sin(t), cosT = Math.cos(t * 0.7);
+      for (let y = 0; y < BH; y++){
+        for (let x = 0; x < BW; x++){
+          // Slow sine field + noise
+          const sine = Math.sin((x * 0.08) + sinT * 2) + Math.cos((y * 0.07) + cosT * 1.7);
+          const noise = Math.random();
+          // Bias toward dark cool tones with occasional brighter specks
+          const v = Math.max(0, Math.min(1, 0.18 + sine * 0.08 + (noise > 0.985 ? 0.7 : noise * 0.15)));
+          const idx = (y * BW + x) * 4;
+          data[idx]     = Math.round(v * 180);   // R — slightly warm
+          data[idx + 1] = Math.round(v * 200);   // G
+          data[idx + 2] = Math.round(v * 255);   // B — cooler
+          data[idx + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      // Throttle to ~20 fps
+      setTimeout(() => requestAnimationFrame(frame), 50);
+    }
+    frame();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden){ running = false; }
+      else if (!running){ running = true; frame(); }
+    });
+  })();
+
+  // --- Depth fade for far tiles — runs throttled via rAF, scheduled by apply() ---
+  var tilesAll = Array.from(document.querySelectorAll('.tile'));
+  var depthRAF = null;
+  function updateDepth(){
+    depthRAF = null;
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    const maxD = Math.hypot(cx, cy) * 1.6;
+    for (const tile of tilesAll){
+      const rx = parseFloat(tile.style.left) || 0;
+      const ry = parseFloat(tile.style.top) || 0;
+      // World-space → screen-space using current tx/ty/tz
+      const sxp = rx * tz + tx - cx;
+      const syp = ry * tz + ty - cy;
+      const d = Math.hypot(sxp, syp);
+      const k = Math.min(1, d / maxD);
+      tile.style.opacity = (1 - k * 0.45).toFixed(3);
+    }
+  }
+  function scheduleDepth(){ if (!depthRAF) depthRAF = requestAnimationFrame(updateDepth); }
+  window.addEventListener('resize', scheduleDepth);
+  scheduleDepth();
 
   document.addEventListener('gesturestart', e => e.preventDefault());
 })();

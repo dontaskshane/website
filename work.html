@@ -139,11 +139,11 @@
     gap: 18px 16px;
   }
     .card {
-    will-change: transform;
-
     display: flex; flex-direction: column;
     cursor: pointer;
     border-radius: 6px;
+    content-visibility: auto;
+    contain-intrinsic-size: 280px 240px;
   }
   .thumb {
     width: 100%;
@@ -153,6 +153,7 @@
     background: rgba(0, 0, 0, 0.04);
     transition: box-shadow .2s ease;
     position: relative;
+    contain: layout paint;
   }
   .thumb .skeleton {
     position: absolute;
@@ -374,30 +375,37 @@
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML =
-        '<div class="thumb"><div class="skeleton"></div><img loading="lazy" src="' + src + '" alt="" onload="this.classList.add(\'loaded\'); this.previousElementSibling.style.display=\'none\';"></div>' +
+        '<div class="thumb"><div class="skeleton"></div><img loading="lazy" decoding="async" src="' + src + '" alt="" onload="this.classList.add(\'loaded\'); this.previousElementSibling.style.display=\'none\';"></div>' +
         '<div class="caption">' + basename(src) + '</div>';
       card.addEventListener('click', () => openLb(i));
       grid.appendChild(card);
     });
     document.getElementById('pane').scrollTop = 0;
-    // Preload first 10 images for better performance
-    if (folderKey === 'all') {
-      list.slice(0, 10).forEach(src => {
-        const img = new Image();
-        img.src = src;
-      });
-    }
+    // Preload first few images of any folder so switching feels instant
+    list.slice(0, 6).forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }
+
+  function prefetchNeighbors(i) {
+    if (!currentList.length) return;
+    const n = currentList.length;
+    const next = new Image(); next.src = currentList[(i + 1) % n];
+    const prev = new Image(); prev.src = currentList[(i - 1 + n) % n];
   }
 
   function openLb(i) {
     currentIndex = i;
     lbImg.src = currentList[i];
     lb.classList.add('open');
+    prefetchNeighbors(i);
   }
   function closeLb() { lb.classList.remove('open'); lbImg.src = ''; }
   function step(d) {
     currentIndex = (currentIndex + d + currentList.length) % currentList.length;
     lbImg.src = currentList[currentIndex];
+    prefetchNeighbors(currentIndex);
   }
 
   lb.addEventListener('click', (e) => {
