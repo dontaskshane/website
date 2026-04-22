@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E8E8ED">
+<title>Shane Wetzel — Work</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📁</text></svg>">
+<style>
+  :root {
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+    --ink: #1d1d1f;
+    --ink-dim: rgba(29, 29, 31, 0.58);
+    --ink-faint: rgba(29, 29, 31, 0.38);
+    --accent: #0071E3;
+    --sel-bg: rgba(0, 113, 227, 0.14);
+    --panel: rgba(255, 255, 255, 0.62);
+    --panel-border: rgba(255, 255, 255, 0.55);
+    --shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset,
+              0 30px 60px -18px rgba(0, 0, 0, 0.22),
+              0 8px 22px -6px rgba(0, 0, 0, 0.1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100%; height: 100vh;
+    font-family: var(--sans);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+  body {
+    background:
+      radial-gradient(1200px 600px at 12% -10%, #E6DFF5 0%, transparent 60%),
+      radial-gradient(1000px 700px at 100% 110%, #FDE6D3 0%, transparent 55%),
+      radial-gradient(900px 900px at 50% 50%, #F3EEE8 0%, transparent 70%),
+      linear-gradient(160deg, #EDE9E2 0%, #D9D4CC 100%);
+  }
+
+  .lights {
+    position: fixed; top: 18px; left: 20px; z-index: 20;
+    display: flex; gap: 8px;
+  }
+  .light {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: none; padding: 0;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+  }
+  .light.close { background: #FF5F57; }
+  .light.min   { background: #FEBC2E; }
+  .light.max   { background: #28C840; }
+  .light:hover { filter: brightness(0.92); }
+
+  .app {
+    position: absolute;
+    top: 54px; left: 16px; right: 16px; bottom: 16px;
+    display: grid;
+    grid-template-columns: 224px 1fr;
+    gap: 14px;
+  }
+
+  .sidebar {
+    border-radius: 16px;
+    background: var(--panel);
+    backdrop-filter: blur(34px) saturate(180%);
+    -webkit-backdrop-filter: blur(34px) saturate(180%);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--shadow);
+    padding: 18px 12px;
+    overflow-y: auto;
+    font-size: 13px;
+  }
+  .brand {
+    padding: 4px 10px 14px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+  .sec-label {
+    padding: 14px 10px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 400;
+    user-select: none;
+    transition: background .15s ease;
+  }
+  .nav-item:hover { background: rgba(0, 0, 0, 0.05); }
+  .nav-item.active {
+    background: var(--sel-bg);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .nav-item .ico {
+    width: 18px; height: 18px;
+    font-family: var(--emoji);
+    font-size: 15px; line-height: 1;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+
+  .pane {
+    border-radius: 16px;
+    background: var(--panel);
+    backdrop-filter: blur(34px) saturate(180%);
+    -webkit-backdrop-filter: blur(34px) saturate(180%);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--shadow);
+    overflow-y: auto;
+    padding: 28px 32px 40px;
+  }
+  .pane-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .pane-title {
+    font-size: 20px; font-weight: 600; letter-spacing: -0.02em;
+  }
+  .pane-count {
+    font-size: 12px; color: var(--ink-dim);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 18px 16px;
+  }
+  .card {
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  .thumb {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.04);
+    transition: box-shadow .2s ease;
+  }
+  .thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .card:hover .thumb {
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.35), 0 8px 20px -6px rgba(0, 0, 0, 0.15);
+  }
+  .caption {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: -0.01em;
+    text-align: center;
+    word-break: break-word;
+  }
+
+  .lb {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0, 0, 0, 0.88);
+    display: none; align-items: center; justify-content: center;
+    cursor: zoom-out;
+    backdrop-filter: blur(20px);
+  }
+  .lb.open { display: flex; }
+  .lb img { max-width: 92vw; max-height: 92vh; box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+  .lb-close {
+    position: absolute; top: 20px; right: 24px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: none; color: #fff; font-size: 16px; cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .lb-close:hover { background: rgba(255,255,255,0.25); }
+
+  @media (max-width: 760px) {
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      top: 50px; left: 10px; right: 10px; bottom: 10px;
+      gap: 10px;
+    }
+    .sidebar { max-height: 30vh; padding: 12px 8px; }
+    .pane { padding: 18px 16px 28px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 14px 10px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="lights">
+    <button class="light close" aria-label="Home" onclick="location.href='index.html'"></button>
+    <button class="light min" aria-label="Home" onclick="location.href='index.html'"></button>
+    <button class="light max" aria-label="Home" onclick="location.href='index.html'"></button>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar" aria-label="Sidebar">
+      <div class="brand">Shane Wetzel</div>
+
+      <a class="nav-item active" data-folder="all" href="#">
+        <span class="ico">🗂️</span><span>Overview</span>
+      </a>
+
+      <div class="sec-label">Selected Work</div>
+      <a class="nav-item" data-folder="digital" href="#">
+        <span class="ico">📁</span><span>Digital</span>
+      </a>
+      <a class="nav-item" data-folder="analog" href="#">
+        <span class="ico">📁</span><span>Analog</span>
+      </a>
+      <a class="nav-item" data-folder="random" href="#">
+        <span class="ico">📁</span><span>Random</span>
+      </a>
+
+      <div class="sec-label">Links</div>
+      <a class="nav-item" href="https://www.instagram.com/" target="_blank" rel="noopener">
+        <span class="ico">📷</span><span>Instagram</span>
+      </a>
+    </aside>
+
+    <main class="pane" id="pane">
+      <div class="pane-header">
+        <div class="pane-title" id="paneTitle">Overview</div>
+        <div class="pane-count" id="paneCount"></div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </main>
+  </div>
+
+  <div class="lb" id="lb" aria-hidden="true">
+    <button class="lb-close" aria-label="Close">✕</button>
+    <img id="lbImg" alt="">
+  </div>
+
+<script>
+(function(){
+  const DIGITAL = [
+    'images/digital/DSC04133.JPG',
+    'images/digital/R0000031.JPG',
+    'images/digital/R0000994.JPG',
+    'images/digital/R0001088.JPG',
+    'images/digital/R0001099.JPG',
+    'images/digital/R0001174.JPG'
+  ];
+  const ANALOG = [
+    'images/analog/000010610005.jpg',
+    'images/analog/000012710015.jpg',
+    'images/analog/dedeAA001.jpg',
+    'images/analog/dedeAA006A.jpg',
+    'images/analog/dedeAA007A.jpg',
+    'images/analog/dedeAA012A.jpg',
+    'images/analog/dedeAA013A.jpg',
+    'images/analog/dedeAA016.jpg',
+    'images/analog/dedeAA020.jpg',
+    'images/analog/dedeAA024.jpg',
+    'images/analog/dedeAA034.jpg',
+    'images/analog/dedeAA038.jpg'
+  ];
+  const RANDOM = [
+    'images/DSC04066.JPG','images/DSC04133.JPG',
+    'images/IMG_0191.jpeg','images/IMG_0206.jpeg','images/IMG_1921.jpeg',
+    'images/IMG_2125.JPG','images/IMG_2287.jpeg','images/IMG_2441.jpeg',
+    'images/IMG_2659.jpeg','images/IMG_2836.jpeg',
+    'images/R0000188.JPG','images/R0000229.JPG','images/dedeAA018A.jpg',
+    'images/img_1.JPG','images/img_2.jpeg','images/img_3.jpeg','images/img_4.jpeg',
+    'images/img_5.jpeg','images/img_6.jpeg','images/img_7.JPG','images/img_8.JPG',
+    'images/img_9.JPG','images/img_10.JPG','images/img_11.jpeg','images/img_12.jpg',
+    'images/img_13.jpg','images/img_14.jpg','images/img_15.jpg','images/img_16.jpeg',
+    'images/img_17.jpeg'
+  ];
+  const ALL = [...DIGITAL, ...ANALOG, ...RANDOM];
+
+  const FOLDERS = {
+    all:     { list: ALL,     title: 'Overview' },
+    digital: { list: DIGITAL, title: 'Digital'  },
+    analog:  { list: ANALOG,  title: 'Analog'   },
+    random:  { list: RANDOM,  title: 'Random'   }
+  };
+
+  const grid = document.getElementById('grid');
+  const lb = document.getElementById('lb');
+  const lbImg = document.getElementById('lbImg');
+  const titleEl = document.getElementById('paneTitle');
+  const countEl = document.getElementById('paneCount');
+
+  const basename = (p) => p.split('/').pop();
+
+  let currentList = [];
+  let currentIndex = 0;
+
+  function render(folderKey) {
+    const { list, title } = FOLDERS[folderKey] || FOLDERS.all;
+    currentList = list;
+    titleEl.textContent = title;
+    countEl.textContent = list.length + (list.length === 1 ? ' item' : ' items');
+    grid.innerHTML = '';
+    list.forEach((src, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML =
+        '<div class="thumb"><img loading="lazy" src="' + src + '" alt=""></div>' +
+        '<div class="caption">' + basename(src) + '</div>';
+      card.addEventListener('click', () => openLb(i));
+      grid.appendChild(card);
+    });
+    document.getElementById('pane').scrollTop = 0;
+  }
+
+  function openLb(i) {
+    currentIndex = i;
+    lbImg.src = currentList[i];
+    lb.classList.add('open');
+  }
+  function closeLb() { lb.classList.remove('open'); lbImg.src = ''; }
+  function step(d) {
+    currentIndex = (currentIndex + d + currentList.length) % currentList.length;
+    lbImg.src = currentList[currentIndex];
+  }
+
+  lb.addEventListener('click', (e) => {
+    if (e.target === lb || e.target.classList.contains('lb-close')) closeLb();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLb();
+    else if (e.key === 'ArrowLeft') step(-1);
+    else if (e.key === 'ArrowRight') step(1);
+  });
+
+  document.querySelectorAll('.nav-item[data-folder]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+      render(el.dataset.folder);
+    });
+  });
+
+  render('all');
+})();
+</script>
+</body>
+</html>

@@ -1,164 +1,394 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦠</text></svg>">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F5F7">
+<title>Shane Wetzel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦠</text></svg>">
+<style>
+  :root {
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+    --ink: #1d1d1f;
+    --ink-dim: rgba(29, 29, 31, 0.6);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100%; min-height: 100vh;
+    font-family: var(--sans);
+    color: var(--ink);
+    background: #EDEDED;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+
+  /* Blurred photo backdrop — crossfades slowly for subtle life behind glass */
+  .backdrop {
+    position: fixed; inset: 0; z-index: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, #F5F5F7 0%, #E8E6E3 100%);
+  }
+  .backdrop img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: blur(60px) saturate(120%) brightness(1.05);
+    transform: scale(1.3);
+    opacity: 0;
+    transition: opacity 2.5s ease;
+    will-change: opacity;
+  }
+  .backdrop img.on { opacity: 0.55; }
+  /* Soft light overlay to keep glass readable */
+  .backdrop::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.15) 60%, rgba(0,0,0,0.08) 100%);
+    pointer-events: none;
+  }
+
+  header {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 28px 36px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 10;
+  }
+  .name {
+    font-family: var(--sans);
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-decoration: none;
+    opacity: 0.88;
+    transition: opacity .2s ease;
+  }
+  .name:hover { opacity: 1; }
+
+  main {
+    position: relative; z-index: 5;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 80px 24px;
+  }
+
+  .tile {
+    position: relative;
+    width: 220px; height: 260px;
+    border-radius: 32px;
+    background: rgba(255, 255, 255, 0.38);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.6) inset,
+      0 20px 50px -12px rgba(0, 0, 0, 0.18),
+      0 4px 12px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s ease, background .3s ease;
+    cursor: pointer;
+  }
+  .tile:hover {
+    transform: translateY(-8px) scale(1.02);
+    background: rgba(255, 255, 255, 0.52);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 32px 70px -14px rgba(0, 0, 0, 0.25),
+      0 6px 18px rgba(0, 0, 0, 0.08);
+  }
+  .tile:active { transform: translateY(-4px) scale(1.01); transition-duration: .2s; }
+
+  .tile .emoji {
+    font-family: var(--emoji);
+    font-size: 88px;
+    line-height: 1;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.15));
+    user-select: none;
+  }
+  .tile .logo-wrap {
+    width: 92px; height: 92px;
+    display: grid; place-items: center;
+  }
+  .tile .logo-wrap img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.18));
+    animation: spin 16s linear infinite, breathe 4s ease-in-out infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 1; }
+  }
+  .tile .label {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    opacity: 0.85;
+  }
+
+  footer {
+    position: fixed; bottom: 18px; left: 0; right: 0;
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .backdoor {
+    pointer-events: auto;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ink-dim);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    cursor: default;
+    user-select: none;
+  }
+
+  @media (max-width: 720px) {
+    html, body { overflow-y: auto; }
+    header { padding: 20px 22px; }
+    main {
+      flex-direction: column;
+      gap: 18px;
+      padding: 90px 22px 60px;
+    }
+    .tile { width: min(86vw, 320px); height: 200px; }
+    .tile .emoji { font-size: 70px; }
+    .tile .logo-wrap { width: 72px; height: 72px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile .logo-wrap img { animation: none; }
+    .backdrop img { transition: none; }
+  }
+
+  /* Button reset so <button class="tile"> matches <a class="tile"> */
+  button.tile { font: inherit; color: inherit; border: 1px solid rgba(255,255,255,0.55); }
+
+  /* --- About modal --- */
+  .modal {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(20, 20, 24, 0.35);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    opacity: 0;
+    transition: opacity .25s ease;
+  }
+  .modal.open { display: flex; opacity: 1; }
+
+  .about-win {
+    width: min(860px, 100%);
+    max-height: 86vh;
+    background: #1C1C1E;
+    color: #F5F5F7;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 40px 120px rgba(0, 0, 0, 0.55),
+      0 0 0 0.5px rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transform: scale(0.96) translateY(8px);
+    opacity: 0;
+    transition: transform .3s cubic-bezier(.2,.8,.2,1), opacity .25s ease;
+  }
+  .modal.open .about-win { transform: none; opacity: 1; }
+
+  .about-bar {
+    display: flex; align-items: center;
+    padding: 12px 14px;
+    background: #2A2A2C;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .about-bar .lights { display: flex; gap: 8px; }
+  .about-bar .lt {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: none; padding: 0; cursor: pointer;
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.2);
+  }
+  .about-bar .lt.close { background: #FF5F57; }
+  .about-bar .lt.min   { background: #FEBC2E; }
+  .about-bar .lt.max   { background: #28C840; }
+  .about-bar .title {
+    position: absolute; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+    font-size: 13px; font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
+    pointer-events: none;
+  }
+  .about-bar .title .doc { font-family: var(--emoji); font-size: 14px; }
+
+  .about-body {
+    overflow-y: auto;
+    padding: 36px 48px 44px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgba(245, 245, 247, 0.86);
+  }
+  .about-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 1fr;
+    gap: 24px;
+    padding: 28px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .about-row:first-child { padding-top: 0; }
+  .about-row:last-child  { border-bottom: none; padding-bottom: 0; }
+  .about-row.single { grid-template-columns: 180px 1fr; }
+  .about-label {
+    font-weight: 500;
+    color: #F5F5F7;
+    font-size: 14px;
+  }
+  .about-col p { margin-bottom: 14px; }
+  .about-col p:last-child { margin-bottom: 0; }
+  .about-col em { font-style: italic; color: rgba(245, 245, 247, 0.72); }
+  .about-col a {
+    color: rgba(245, 245, 247, 0.86);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(245, 245, 247, 0.25);
+    transition: border-color .15s ease;
+  }
+  .about-col a:hover { border-bottom-color: rgba(245, 245, 247, 0.8); }
+
+  @media (max-width: 680px) {
+    .modal { padding: 16px; }
+    .about-body { padding: 24px 22px 28px; font-size: 13px; }
+    .about-row { grid-template-columns: 1fr; gap: 8px; padding: 20px 0; }
+    .about-row.single { grid-template-columns: 1fr; }
+    .about-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(245,245,247,0.55); }
+  }
+</style>
 </head>
 <body>
-    <header>
-        <h1><a href="/">Shane Wetzel</a></h1>
-        <button id="invert-toggle" class="invert-toggle" type="button" aria-pressed="false" aria-label="Toggle invert">
-            <img src="images/logo_sw.png" alt="">
-        </button>
-    </header>
 
-    <div class="gallery" id="gallery"></div>
+  <div class="backdrop" aria-hidden="true">
+    <img id="bdA" alt="">
+    <img id="bdB" alt="">
+  </div>
 
-    <div class="lightbox" id="lightbox">
-        <button class="lightbox-close" onclick="closeLightbox()">×</button>
-        <button class="lightbox-prev" onclick="showPrev()">‹</button>
-        <button class="lightbox-next" onclick="showNext()">›</button>
-        <img id="lightbox-img" src="" alt="" draggable="false">
+  <header>
+    <a href="/" class="name">Shane Wetzel</a>
+  </header>
+
+  <main>
+    <a href="work.html" class="tile" aria-label="Work">
+      <span class="emoji">📁</span>
+      <span class="label">Work</span>
+    </a>
+    <button type="button" class="tile" id="aboutTile" aria-label="About" aria-haspopup="dialog">
+      <span class="emoji">📝</span>
+      <span class="label">About</span>
+    </button>
+    <a href="universe.html" class="tile" aria-label="Universe">
+      <span class="logo-wrap"><img src="images/logo_sw.png" alt=""></span>
+      <span class="label">Universe</span>
+    </a>
+  </main>
+
+  <footer>
+    <a href="dashboard.html" class="backdoor">© 2026 Shane Wetzel</a>
+  </footer>
+
+  <div class="modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" aria-hidden="true">
+    <div class="about-win">
+      <div class="about-bar">
+        <div class="lights">
+          <button class="lt close" aria-label="Close" id="aboutClose"></button>
+          <button class="lt min" aria-label="Close"></button>
+          <button class="lt max" aria-label="Close"></button>
+        </div>
+        <div class="title" id="aboutTitle"><span class="doc">📝</span><span>About me</span></div>
+      </div>
+      <div class="about-body">
+        <div class="about-row">
+          <div class="about-label">Contact</div>
+          <div class="about-col">
+            <p>Bern, CH<br>46.948°N 7.447°E</p>
+            <p><a href="mailto:explainshane@gmail.com">explainshane@gmail.com</a><br><a href="https://www.instagram.com/" target="_blank" rel="noopener">@shanewetzel</a></p>
+          </div>
+          <div class="about-col">
+            <p>Shane Wetzel is a designer and photographer working between digital and analog. Portfolio, studio notes, and loose experiments live here.</p>
+            <p><em>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam fringilla massa massa, sit amet molestie orci suscipit sed. Ut tincidunt eleifend felis sit amet suscipit.</em></p>
+          </div>
+        </div>
+        <div class="about-row">
+          <div class="about-label">Studio</div>
+          <div class="about-col" style="grid-column: span 2;">
+            <p>Curabitur vitae odio pretium, volutpat augue efficitur, ullamcorper ante. Nunc ultrices eget urna in aliquet. Nulla at ullamcorper leo. Aliquam egestas non lacus sed tempor.</p>
+          </div>
+        </div>
+        <div class="about-row">
+          <div class="about-label">Selected Press</div>
+          <div class="about-col" style="grid-column: span 2;">
+            <p>'<em>Vestibulum Inceptos Gravida</em>', Ornare Review, by Tincidunt Nisl — 2024</p>
+            <p>'Ullamcorper Faucibus (Congue) Euismod', by Ligula Parturient, Bibendum Review Porta Libero — 2023</p>
+            <p>Dictumst Tristique, Facilisis Magazine, Edition Two, Porta Libero — 2021</p>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <footer>
-        <a href="dashboard.html" class="footer-link">© 2025 Shane Wetzel</a>
-    </footer>
+<script>
+(function(){
+  const PHOTOS = [
+    'img_1.JPG','img_2.jpeg','img_3.jpeg','img_4.jpeg','img_5.jpeg',
+    'img_6.jpeg','img_7.JPG','img_8.JPG','img_9.JPG','img_10.JPG',
+    'img_11.jpeg','img_12.jpg','img_13.jpg','img_14.jpg','img_15.jpg',
+    'img_16.jpeg','img_17.jpeg','DSC04066.JPG','DSC04133.JPG',
+    'IMG_0191.jpeg','IMG_0206.jpeg','IMG_1921.jpeg','IMG_2125.JPG',
+    'IMG_2287.jpeg','IMG_2441.jpeg','IMG_2659.jpeg','IMG_2836.jpeg',
+    'R0000188.JPG','R0000229.JPG','dedeAA018A.jpg'
+  ];
+  const a = document.getElementById('bdA');
+  const b = document.getElementById('bdB');
+  const pool = PHOTOS.slice().sort(() => Math.random() - 0.5);
+  let i = 0, active = a, next = b;
 
-    <script>
-        const photos = [
-            'img_1.JPG',
-            'img_2.jpeg',
-            'img_3.jpeg',
-            'img_4.jpeg',
-            'img_5.jpeg',
-            'img_6.jpeg',
-            'img_7.JPG',
-            'img_8.JPG',
-            'img_9.JPG',
-            'img_10.JPG',
-            'img_11.jpeg',
-            'img_12.jpg',
-            'img_13.jpg',
-            'img_14.jpg',
-            'img_15.jpg',
-            'img_16.jpeg',
-            'img_17.jpeg',
-            'DSC04066.JPG',
-            'DSC04133.JPG',
-            'IMG_0191.jpeg',
-            'IMG_0206.jpeg',
-            'IMG_1921.jpeg',
-            'IMG_2125.JPG',
-            'IMG_2287.jpeg',
-            'IMG_2441.jpeg',
-            'IMG_2659.jpeg',
-            'IMG_2836.jpeg',
-            'R0000188.JPG',
-            'R0000229.JPG',
-            'dedeAA018A.jpg'
-        ];
+  function swap() {
+    const src = 'images/' + pool[i % pool.length];
+    const img = new Image();
+    img.onload = () => {
+      next.src = src;
+      next.classList.add('on');
+      active.classList.remove('on');
+      [active, next] = [next, active];
+      i++;
+    };
+    img.src = src;
+  }
+  swap();
+  setInterval(swap, 9000);
 
-        // Path to images folder
-        const imageFolderPath = 'images/';
-
-        const gallery = document.getElementById('gallery');
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-
-        function syncHeaderHeightVar() {
-            const header = document.querySelector('header');
-            if (!header) return;
-            document.documentElement.style.setProperty('--header-height', `${header.offsetHeight}px`);
-        }
-
-        syncHeaderHeightVar();
-        window.addEventListener('resize', syncHeaderHeightVar);
-        window.addEventListener('orientationchange', syncHeaderHeightVar);
-
-        let currentIndex = 0;
-
-        // Helper to detect mobile device
-        function isMobile() {
-            return window.matchMedia('(max-width: 640px)').matches;
-        }
-
-        // Generate gallery items from the photos array
-        photos.forEach((photo, index) => {
-            const item = document.createElement('div');
-            item.className = 'gallery-item';
-
-            const img = document.createElement('img');
-            img.src = imageFolderPath + photo;
-            img.alt = '';
-            img.draggable = false;
-
-            // Prevent double-tap zoom on mobile
-            if (isMobile()) {
-                img.addEventListener('touchstart', function(e) {
-                    if (e.touches.length > 1) {
-                        e.preventDefault();
-                    }
-                }, { passive: false });
-                img.addEventListener('dblclick', function(e) {
-                    e.preventDefault();
-                });
-            }
-
-            item.appendChild(img);
-            gallery.appendChild(item);
-
-            // Only allow click to open lightbox on non-mobile
-            if (!isMobile()) {
-                item.addEventListener('click', function() {
-                    currentIndex = index;
-                    lightboxImg.src = img.src;
-                    lightbox.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                });
-            }
-        });
-
-        // Toggle global invert
-        const invertToggle = document.getElementById('invert-toggle');
-        invertToggle.addEventListener('click', function() {
-            document.body.classList.toggle('global-invert');
-            invertToggle.setAttribute('aria-pressed', document.body.classList.contains('global-invert') ? 'true' : 'false');
-        });
-
-        function closeLightbox() {
-            lightbox.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-
-        function showPrev() {
-            currentIndex = (currentIndex - 1 + photos.length) % photos.length;
-            lightboxImg.src = imageFolderPath + photos[currentIndex];
-        }
-
-        function showNext() {
-            currentIndex = (currentIndex + 1) % photos.length;
-            lightboxImg.src = imageFolderPath + photos[currentIndex];
-        }
-
-        lightbox.addEventListener('click', function(e) {
-            if (e.target === lightbox) {
-                closeLightbox();
-            }
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeLightbox();
-            } else if (e.key === 'ArrowLeft') {
-                showPrev();
-            } else if (e.key === 'ArrowRight') {
-                showNext();
-            }
-        });
-    </script>
+  // About modal
+  const modal = document.getElementById('aboutModal');
+  const openBtn = document.getElementById('aboutTile');
+  const closeBtn = document.getElementById('aboutClose');
+  function openAbout(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
+  function closeAbout(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+  openBtn.addEventListener('click', openAbout);
+  closeBtn.addEventListener('click', closeAbout);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeAbout(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) closeAbout(); });
+})();
+</script>
 </body>
 </html>

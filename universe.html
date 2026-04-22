@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<title>Shane Wetzel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #000; color: #fff;
+    cursor: grab;
+    touch-action: none;
+    -webkit-font-smoothing: antialiased;
+  }
+  body.dragging { cursor: grabbing; }
+  body.dragging * { cursor: grabbing !important; }
+
+  #stage {
+    position: fixed; inset: 0;
+    overflow: hidden;
+  }
+  /* Subtle radial depth — the "universe" feel */
+  #stage::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, #0a0a0c 0%, #000 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  #world {
+    position: absolute; left: 0; top: 0;
+    width: 1px; height: 1px;
+    transform-origin: 0 0;
+    will-change: transform;
+    z-index: 1;
+  }
+  .tile {
+    position: absolute;
+    background: #0a0a0a;
+    box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: box-shadow .3s ease, transform .3s ease;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .tile:hover {
+    box-shadow: 0 10px 40px -4px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.35);
+    z-index: 2;
+  }
+  .tile img {
+    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* Invisible back — logo top-left, subtle, only visible on hover */
+  .back {
+    position: fixed; top: 20px; left: 20px; z-index: 10;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: grid; place-items: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .4s ease, background .2s ease;
+  }
+  body.idle .back { opacity: 0; }
+  body:not(.idle) .back { opacity: 0.7; }
+  .back:hover { opacity: 1 !important; background: rgba(255, 255, 255, 0.14); }
+  .back img {
+    width: 18px; height: 18px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+  }
+
+  /* Lightbox */
+  #lb {
+    position: fixed; inset: 0; z-index: 20;
+    background: #000;
+    display: none; align-items: center; justify-content: center;
+    cursor: zoom-out;
+  }
+  #lb.open { display: flex; }
+  #lb img {
+    max-width: 94vw; max-height: 94vh;
+    display: block; user-select: none;
+    box-shadow: 0 40px 120px rgba(0, 0, 0, 0.8);
+  }
+</style>
+</head>
+<body class="idle">
+
+  <div id="stage">
+    <div id="world"></div>
+  </div>
+
+  <a href="index.html" class="back" aria-label="Home">
+    <img src="images/logo_sw.png" alt="">
+  </a>
+
+  <div id="lb"><img id="lbimg" alt=""></div>
+
+<script>
+(function(){
+  'use strict';
+
+  const IMAGES = [
+    'images/digital/DSC04133.JPG','images/digital/R0000031.JPG','images/digital/R0000994.JPG',
+    'images/digital/R0001088.JPG','images/digital/R0001099.JPG','images/digital/R0001174.JPG',
+    'images/analog/000010610005.jpg','images/analog/000012710015.jpg',
+    'images/analog/dedeAA001.jpg','images/analog/dedeAA006A.jpg','images/analog/dedeAA007A.jpg',
+    'images/analog/dedeAA012A.jpg','images/analog/dedeAA013A.jpg','images/analog/dedeAA016.jpg',
+    'images/analog/dedeAA020.jpg','images/analog/dedeAA024.jpg','images/analog/dedeAA034.jpg',
+    'images/analog/dedeAA038.jpg',
+    'images/DSC04066.JPG','images/DSC04133.JPG',
+    'images/IMG_0191.jpeg','images/IMG_0206.jpeg','images/IMG_1921.jpeg',
+    'images/IMG_2125.JPG','images/IMG_2287.jpeg','images/IMG_2441.jpeg',
+    'images/IMG_2659.jpeg','images/IMG_2836.jpeg',
+    'images/R0000188.JPG','images/R0000229.JPG','images/dedeAA018A.jpg',
+    'images/img_1.JPG','images/img_2.jpeg','images/img_3.jpeg','images/img_4.jpeg',
+    'images/img_5.jpeg','images/img_6.jpeg','images/img_7.JPG','images/img_8.JPG',
+    'images/img_9.JPG','images/img_10.JPG','images/img_11.jpeg','images/img_12.jpg',
+    'images/img_13.jpg','images/img_14.jpg','images/img_15.jpg','images/img_16.jpeg',
+    'images/img_17.jpeg'
+  ];
+
+  const world = document.getElementById('world');
+  const stage = document.getElementById('stage');
+
+  function mulberry32(a){
+    return function(){
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rnd = mulberry32(271);
+
+  const SPREAD_W = 4200;
+  const SPREAD_H = 2800;
+  const CENTER_X = SPREAD_W / 2;
+  const CENTER_Y = SPREAD_H / 2;
+
+  const placements = [];
+  const MIN_SEP = 220;
+  for (let i = 0; i < IMAGES.length; i++){
+    let x = 0, y = 0, ok = false, attempts = 0;
+    while (!ok && attempts < 120){
+      attempts++;
+      x = rnd() * SPREAD_W;
+      y = rnd() * SPREAD_H;
+      ok = true;
+      for (const p of placements){
+        if (Math.hypot(x - p.x, y - p.y) < MIN_SEP){ ok = false; break; }
+      }
+    }
+    placements.push({ x, y, rot: (rnd() - 0.5) * 3, scale: 0.75 + rnd() * 0.5 });
+  }
+
+  const DISPLAY_BASE = 240;
+
+  IMAGES.forEach((name, i) => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    const p = placements[i];
+    tile.style.left = p.x + 'px';
+    tile.style.top  = p.y + 'px';
+    tile.style.transform = `translate(-50%, -50%) rotate(${p.rot}deg)`;
+
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.alt = '';
+    img.draggable = false;
+    img.onload = () => {
+      const r = img.naturalWidth / img.naturalHeight;
+      let w, h;
+      const base = DISPLAY_BASE * p.scale;
+      if (r >= 1){ w = base; h = base / r; }
+      else       { h = base; w = base * r; }
+      tile.style.width  = Math.round(w) + 'px';
+      tile.style.height = Math.round(h) + 'px';
+    };
+    img.src = name;
+    tile.appendChild(img);
+
+    tile.addEventListener('click', (e) => {
+      if (justDragged) return;
+      openLightbox(name);
+      e.stopPropagation();
+    });
+
+    world.appendChild(tile);
+  });
+
+  // --- Pan / Zoom ---
+  let tx = 0, ty = 0, tz = 1;
+  const MIN_Z = 0.2, MAX_Z = 4;
+
+  function centerView(){
+    tx = window.innerWidth / 2  - CENTER_X * tz;
+    ty = window.innerHeight / 2 - CENTER_Y * tz;
+    apply();
+  }
+
+  function apply(){
+    world.style.transform = `translate(${tx}px, ${ty}px) scale(${tz})`;
+  }
+
+  window.addEventListener('resize', apply);
+
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  let justDragged = false, dragDist = 0;
+  stage.addEventListener('mousedown', (e) => {
+    dragging = true; dragDist = 0;
+    sx = e.clientX; sy = e.clientY;
+    ox = tx; oy = ty;
+    document.body.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    dragDist = Math.max(dragDist, Math.hypot(dx, dy));
+    tx = ox + dx; ty = oy + dy;
+    apply();
+  });
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('dragging');
+    justDragged = dragDist > 4;
+    setTimeout(() => justDragged = false, 80);
+  });
+
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const f = e.deltaY < 0 ? 1.12 : 1/1.12;
+    const newZ = Math.max(MIN_Z, Math.min(MAX_Z, tz * f));
+    const mx = e.clientX, my = e.clientY;
+    tx = mx - (mx - tx) * (newZ / tz);
+    ty = my - (my - ty) * (newZ / tz);
+    tz = newZ;
+    apply();
+  }, { passive: false });
+
+  let touches = {};
+  stage.addEventListener('touchstart', (e) => {
+    for (const t of e.changedTouches){
+      touches[t.identifier] = { x: t.clientX, y: t.clientY };
+    }
+    if (Object.keys(touches).length === 1){
+      const t = e.touches[0]; sx = t.clientX; sy = t.clientY; ox = tx; oy = ty;
+      dragging = true; dragDist = 0;
+    }
+  }, { passive: false });
+
+  stage.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const keys = Object.keys(touches);
+    if (e.touches.length === 1 && keys.length === 1){
+      const t = e.touches[0];
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      dragDist = Math.max(dragDist, Math.hypot(dx, dy));
+      tx = ox + dx; ty = oy + dy;
+      apply();
+    } else if (e.touches.length === 2){
+      const [a, b] = [e.touches[0], e.touches[1]];
+      const prevA = touches[a.identifier], prevB = touches[b.identifier];
+      if (!prevA || !prevB) return;
+      const prevDist = Math.hypot(prevA.x - prevB.x, prevA.y - prevB.y);
+      const curDist  = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      const f = curDist / Math.max(1, prevDist);
+      const cx = (a.clientX + b.clientX) / 2, cy = (a.clientY + b.clientY) / 2;
+      const newZ = Math.max(MIN_Z, Math.min(MAX_Z, tz * f));
+      tx = cx - (cx - tx) * (newZ / tz);
+      ty = cy - (cy - ty) * (newZ / tz);
+      tz = newZ;
+      apply();
+      touches[a.identifier] = { x: a.clientX, y: a.clientY };
+      touches[b.identifier] = { x: b.clientX, y: b.clientY };
+    }
+  }, { passive: false });
+
+  stage.addEventListener('touchend', (e) => {
+    for (const t of e.changedTouches) delete touches[t.identifier];
+    if (e.touches.length === 0){
+      dragging = false;
+      justDragged = dragDist > 6;
+      setTimeout(() => justDragged = false, 100);
+    }
+  });
+
+  // Lightbox
+  const lb = document.getElementById('lb');
+  const lbimg = document.getElementById('lbimg');
+  function openLightbox(src){
+    lbimg.src = src;
+    lb.classList.add('open');
+  }
+  function closeLightbox(){
+    lb.classList.remove('open');
+    lbimg.src = '';
+  }
+  lb.addEventListener('click', closeLightbox);
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape'){
+      if (lb.classList.contains('open')) closeLightbox();
+      else window.location.href = 'index.html';
+    }
+  });
+
+  // Idle fade for back button — reveals on cursor activity, hides when still
+  let idleT;
+  function rouse(){
+    document.body.classList.remove('idle');
+    clearTimeout(idleT);
+    idleT = setTimeout(() => document.body.classList.add('idle'), 2600);
+  }
+  window.addEventListener('mousemove', rouse);
+  window.addEventListener('touchstart', rouse);
+  rouse();
+
+  centerView();
+
+  document.addEventListener('gesturestart', e => e.preventDefault());
+})();
+</script>
+</body>
+</html>
