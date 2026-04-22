@@ -12,7 +12,7 @@
 | `dashboard.html` | Private password-protected personal dashboard (unchanged) |
 | `old/` | Archived previous masonry gallery (`old/index.html`, `old/styles.css`) |
 | `archive/2/`, `archive/3/`, `archive/motion.html` | Archived experimental sites + retired Motion page |
-| `images/` | photos + logo; organised into `images/digital/` (6), `images/analog/` (12), and root (30) |
+| `images/` | photos + logo; organised into `images/digital/` (6), `images/analog/` (12), `images/iPhone/` (33) and root (30) |
 
 ## Stack
 **Vanilla HTML5 / CSS3 / ES6+ JS only.** No npm, no build tools, no frameworks, no backend.
@@ -23,8 +23,8 @@ No external JS deps on any live page (Three.js only lives on archived `/archive/
 - **Never link** dashboard.html from the public site (backdoor stays via `© 2026` footer on `index.html`)
 - **Never add** npm, build tools, TypeScript, or a backend
 - **Dashboard is self-contained** — CSS and JS stay embedded inside dashboard.html
-- Photo paths are explicit with subfolder: `images/digital/*`, `images/analog/*`, `images/*` (root). Arrays live in `work.html` (split into DIGITAL/ANALOG/RANDOM) and `universe.html` (flat IMAGES) — keep in sync when adding photos
-- `work.html` Random folder = only files directly in `images/`, not subfolders. Overview = Digital + Analog + Random
+- Photo paths are explicit with subfolder: `images/digital/*`, `images/analog/*`, `images/iPhone/*`, `images/*` (root). Arrays live in `work.html` (split into DIGITAL/ANALOG/IPHONE/RANDOM) and `universe.html` (flat IMAGES) — keep in sync when adding photos
+- `work.html` Random folder = only files directly in `images/`, not subfolders. Overview = Digital + Analog + iPhone + Random
 - **RSS uses JSONP** on dashboard — do NOT switch to fetch() without a proxy (NZZ blocks CORS)
 
 ## Key Facts

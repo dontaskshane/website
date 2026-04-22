@@ -224,6 +224,9 @@
       <a class="nav-item" data-folder="analog" href="#">
         <span class="ico">📁</span><span>Analog</span>
       </a>
+      <a class="nav-item" data-folder="iphone" href="#">
+        <span class="ico">📱</span><span>iPhone</span>
+      </a>
       <a class="nav-item" data-folder="random" href="#">
         <span class="ico">📁</span><span>Random</span>
       </a>
@@ -272,6 +275,40 @@
     'images/analog/dedeAA034.jpg',
     'images/analog/dedeAA038.jpg'
   ];
+  const IPHONE = [
+    'images/iPhone/amboss.jpeg',
+    'images/iPhone/asics.jpeg',
+    'images/iPhone/audi.jpeg',
+    'images/iPhone/bahnhof.jpeg',
+    'images/iPhone/bikes.jpeg',
+    'images/iPhone/bugatti.jpeg',
+    'images/iPhone/bw.jpeg',
+    'images/iPhone/camper.jpeg',
+    'images/iPhone/dino.jpeg',
+    'images/iPhone/freileitungsmast.jpeg',
+    'images/iPhone/laser.jpeg',
+    'images/iPhone/lombok.jpeg',
+    'images/iPhone/lorraine.jpeg',
+    'images/iPhone/marley.JPG',
+    'images/iPhone/miguel.jpeg',
+    'images/iPhone/mju.jpeg',
+    'images/iPhone/mond.jpeg',
+    'images/iPhone/muenster.jpeg',
+    'images/iPhone/orange_mask.jpeg',
+    'images/iPhone/poerfu.jpeg',
+    'images/iPhone/polo.jpeg',
+    'images/iPhone/sardinien.jpeg',
+    'images/iPhone/schlumpf.JPG',
+    'images/iPhone/schnitzel.jpeg',
+    'images/iPhone/sunset.jpeg',
+    'images/iPhone/tmax.jpeg',
+    'images/iPhone/vapormax.jpeg',
+    'images/iPhone/versace.jpeg',
+    'images/iPhone/vitra.jpeg',
+    'images/iPhone/vully.jpeg',
+    'images/iPhone/wien.JPG',
+    'images/iPhone/yb.jpeg'
+  ];
   const RANDOM = [
     'images/DSC04066.JPG','images/DSC04133.JPG',
     'images/IMG_0191.jpeg','images/IMG_0206.jpeg','images/IMG_1921.jpeg',
@@ -284,12 +321,13 @@
     'images/img_13.jpg','images/img_14.jpg','images/img_15.jpg','images/img_16.jpeg',
     'images/img_17.jpeg'
   ];
-  const ALL = [...DIGITAL, ...ANALOG, ...RANDOM];
+  const ALL = [...DIGITAL, ...ANALOG, ...IPHONE, ...RANDOM];
 
   const FOLDERS = {
     all:     { list: ALL,     title: 'Overview' },
     digital: { list: DIGITAL, title: 'Digital'  },
     analog:  { list: ANALOG,  title: 'Analog'   },
+    iphone:  { list: IPHONE,  title: 'iPhone'   },
     random:  { list: RANDOM,  title: 'Random'   }
   };
 
