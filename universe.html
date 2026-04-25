@@ -21,53 +21,16 @@
   #stage {
     position: fixed; inset: 0;
     overflow: hidden;
-    --mx: 50%;
-    --my: 50%;
   }
-  /* Subtle radial depth — the "universe" feel */
-  #stage::before {
-    content: "";
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, #0a0a0c 0%, #000 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-  /* VHS static canvas — pixelated bad-signal noise */
-  #bg {
+  /* Looping video background */
+  #bgvid {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
+    object-fit: cover;
     pointer-events: none;
-    opacity: 0.18;
-    mix-blend-mode: screen;
     z-index: 0;
+    opacity: 0.55;
   }
-  /* CRT scanlines overlay */
-  #scanlines {
-    position: absolute; inset: 0;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 2px,
-      rgba(0,0,0,0.18) 2px,
-      rgba(0,0,0,0.18) 4px
-    );
-    z-index: 1;
-  }
-  /* Cursor spotlight — very faint bloom under the pointer */
-  #spotlight {
-    position: absolute; inset: 0;
-    pointer-events: none;
-    background: radial-gradient(260px circle at var(--mx) var(--my),
-                                rgba(180, 200, 255, 0.06) 0%,
-                                rgba(180, 200, 255, 0.02) 40%,
-                                transparent 70%);
-    z-index: 1;
-    transition: opacity .4s ease;
-  }
-  @media (hover: none) { #spotlight { display: none; } }
   #world {
     position: absolute; left: 0; top: 0;
     width: 1px; height: 1px;
@@ -140,29 +103,30 @@
   }
   .tile img.loaded { opacity: 1; }
 
-  /* Invisible back — logo top-left, subtle, only visible on hover */
+  /* Glass pill back button */
   .back {
     position: fixed; top: 20px; left: 20px; z-index: 10;
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(18px) saturate(180%);
-    -webkit-backdrop-filter: blur(18px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    display: grid; place-items: center;
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.88);
+    font: 500 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    text-decoration: none;
     cursor: pointer;
     opacity: 0;
-    transition: opacity .4s ease, background .2s ease;
+    transition: opacity .4s ease, background .2s ease, transform .2s ease;
+    user-select: none;
   }
   body.idle .back { opacity: 0; }
-  body:not(.idle) .back { opacity: 0.7; }
-  .back:hover { opacity: 1 !important; background: rgba(255, 255, 255, 0.14); }
-  .back img {
-    width: 18px; height: 18px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-    opacity: 0.9;
-  }
+  body:not(.idle) .back { opacity: 1; }
+  .back:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
+  .back:active { transform: translateY(0); }
+  .back svg { flex-shrink: 0; opacity: 0.9; }
 
   /* Lightbox */
   #lb {
@@ -182,14 +146,15 @@
 <body class="idle">
 
   <div id="stage">
-    <canvas id="bg"></canvas>
-    <div id="scanlines"></div>
-    <div id="spotlight"></div>
+    <video id="bgvid" src="images/background_video.MOV" autoplay muted loop playsinline></video>
     <div id="world"></div>
   </div>
 
   <a href="index.html" class="back" aria-label="Home">
-    <img src="images/logo_sw.png" alt="">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 13L5 8L10 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>Shane Wetzel</span>
   </a>
 
   <div id="zoomPill">100%</div>
@@ -472,12 +437,9 @@
     }
   });
 
-  // --- Cursor spotlight — update CSS vars (cheap, no layout) ---
-  window.addEventListener('pointermove', (e) => {
-    if (e.pointerType !== 'mouse') return;
-    stage.style.setProperty('--mx', e.clientX + 'px');
-    stage.style.setProperty('--my', e.clientY + 'px');
-  }, { passive: true });
+  // Slow the background video to half speed
+  const bgvid = document.getElementById('bgvid');
+  bgvid.addEventListener('canplay', () => { bgvid.playbackRate = 0.4; }, { once: true });
 
   // --- Tile tilt on hover — subtle 3° based on cursor position ---
   document.querySelectorAll('.tile').forEach(tile => {
@@ -549,71 +511,6 @@
     }
   });
 
-  // --- VHS static canvas ---
-  // 96×54 pixel grid scaled to full screen — bad-signal noise, scan tears, color bleed.
-  (function initBackground(){
-    const bg = document.getElementById('bg');
-    const BW = 96, BH = 54;
-    bg.width = BW; bg.height = BH;
-    const ctx = bg.getContext('2d');
-    const img = ctx.createImageData(BW, BH);
-    const data = img.data;
-    let running = true;
-
-    function frame(){
-      if (!running) return;
-
-      // Full-frame noise pass
-      for (let i = 0, n = BW * BH * 4; i < n; i += 4){
-        const r = Math.random();
-        let v;
-        if (r > 0.96)      { v = 180 + Math.random() * 75; }  // bright speck
-        else if (r < 0.04) { v = 0; }                          // dead pixel
-        else               { v = r * 60; }                     // general static
-        // Slight RGB split for chromatic noise feel
-        data[i]     = v * 0.7;
-        data[i + 1] = v * 0.8;
-        data[i + 2] = v;
-        data[i + 3] = 255;
-      }
-
-      // Occasional horizontal tear line — VHS tracking artifact
-      if (Math.random() > 0.78) {
-        const ty = Math.floor(Math.random() * BH);
-        const th = Math.floor(Math.random() * 2) + 1;
-        const shift = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 6) + 2);
-        for (let y = ty, yMax = Math.min(BH, ty + th); y < yMax; y++) {
-          for (let x = 0; x < BW; x++) {
-            const sx = (x + shift + BW) % BW;
-            const si = (y * BW + sx) * 4;
-            const di = (y * BW + x) * 4;
-            data[di]     = Math.min(255, data[si] * 1.6);
-            data[di + 1] = data[si + 1] * 0.5;
-            data[di + 2] = Math.min(255, data[si + 2] * 1.4);
-          }
-        }
-      }
-
-      // Occasional full-width bright band (VHS head switch)
-      if (Math.random() > 0.93) {
-        const by = Math.floor(Math.random() * BH);
-        const i0 = by * BW * 4;
-        for (let x = 0; x < BW; x++) {
-          const idx = i0 + x * 4;
-          data[idx] = data[idx + 1] = data[idx + 2] = Math.floor(60 + Math.random() * 80);
-        }
-      }
-
-      ctx.putImageData(img, 0, 0);
-      setTimeout(() => requestAnimationFrame(frame), 42); // ~24 fps
-    }
-    frame();
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden){ running = false; }
-      else if (!running){ running = true; frame(); }
-    });
-  })();
 
   // --- Depth fade for far tiles — runs throttled via rAF, scheduled by apply() ---
   var tilesAll = Array.from(document.querySelectorAll('.tile'));

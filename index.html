@@ -123,6 +123,8 @@
     width: 100%; height: 100%;
     object-fit: contain;
     filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.18));
+  }
+  .tile .logo-wrap img.spin-breathe {
     animation: spin 16s linear infinite, breathe 4s ease-in-out infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -130,6 +132,16 @@
     0%, 100% { opacity: 0.9; }
     50% { opacity: 1; }
   }
+
+  /* Entrance animation */
+  @keyframes tileIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .tile { animation: tileIn .6s cubic-bezier(.2,.8,.2,1) both; }
+  .tile:nth-child(1) { animation-delay: .05s; }
+  .tile:nth-child(2) { animation-delay: .15s; }
+  .tile:nth-child(3) { animation-delay: .25s; }
   .tile .label {
     font-size: 15px;
     font-weight: 500;
@@ -168,7 +180,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .tile .logo-wrap img { animation: none; }
+    .tile .logo-wrap img.spin-breathe { animation: none; }
+    .tile { animation: none; }
     .backdrop img { transition: none; }
   }
 
@@ -290,17 +303,17 @@
 
   <main>
     <a href="work.html" class="tile" aria-label="Work">
-      <span class="emoji">📁</span>
+      <span class="logo-wrap"><img src="images/finder_folder.png" alt=""></span>
       <span class="label">Work</span>
     </a>
-    <button type="button" class="tile" id="aboutTile" aria-label="About" aria-haspopup="dialog">
-      <span class="emoji">📝</span>
-      <span class="label">About</span>
-    </button>
     <a href="universe.html" class="tile" aria-label="Universe">
-      <span class="logo-wrap"><img src="images/logo_sw.png" alt=""></span>
+      <span class="logo-wrap"><img src="images/logo_sw.png" alt="" class="spin-breathe"></span>
       <span class="label">Universe</span>
     </a>
+    <button type="button" class="tile" id="aboutTile" aria-label="About" aria-haspopup="dialog">
+      <span class="emoji">🕵️</span>
+      <span class="label">About</span>
+    </button>
   </main>
 
   <footer>
@@ -315,7 +328,7 @@
           <button class="lt min" aria-label="Close"></button>
           <button class="lt max" aria-label="Close"></button>
         </div>
-        <div class="title" id="aboutTitle"><span class="doc">📝</span><span>About me</span></div>
+        <div class="title" id="aboutTitle"><span class="doc">🕵️</span><span>About me</span></div>
       </div>
       <div class="about-body">
         <div class="about-row">
