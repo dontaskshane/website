@@ -51,6 +51,7 @@
     border-radius: 4px;
     overflow: hidden;
     transform-style: preserve-3d;
+    contain: layout paint;
   }
   .tile:hover {
     box-shadow: 0 14px 48px -4px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.4);
@@ -146,7 +147,7 @@
 <body class="idle">
 
   <div id="stage">
-    <video id="bgvid" src="images/background_video.MOV" autoplay muted loop playsinline></video>
+    <video id="bgvid" autoplay muted loop playsinline></video>
     <div id="world"></div>
   </div>
 
@@ -164,6 +165,8 @@
 <script>
 (function(){
   'use strict';
+
+  const isMobile = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
 
   const IMAGES = [
     'images/digital/altstadt.JPG','images/digital/american_psycho.JPG','images/digital/axt.JPG',
@@ -205,8 +208,8 @@
   }
   const rnd = mulberry32(271);
 
-  const SPREAD_W = 4200;
-  const SPREAD_H = 2800;
+  const SPREAD_W = isMobile ? 3000 : 4200;
+  const SPREAD_H = isMobile ? 2000 : 2800;
   const CENTER_X = SPREAD_W / 2;
   const CENTER_Y = SPREAD_H / 2;
 
@@ -226,7 +229,7 @@
     placements.push({ x, y, rot: (rnd() - 0.5) * 3, scale: 0.75 + rnd() * 0.5 });
   }
 
-  const DISPLAY_BASE = 240;
+  const DISPLAY_BASE = isMobile ? 180 : 240;
 
   IMAGES.forEach((name, i) => {
     const tile = document.createElement('div');
@@ -321,15 +324,17 @@
   let inertiaRAF = null;
   function stopInertia(){ if (inertiaRAF){ cancelAnimationFrame(inertiaRAF); inertiaRAF = null; } }
   function runInertia(){
-    const friction = 0.92;
+    // 0.94 per 16.67ms — time-based so it feels identical at 60 Hz and 120 Hz
+    const DECAY = 0.94;
     let lastT = performance.now();
     function tick(now){
-      const dt = now - lastT; lastT = now;
+      const dt = Math.min(now - lastT, 64); lastT = now;
+      const f = Math.pow(DECAY, dt / 16.67);
       tx += vx * dt;
       ty += vy * dt;
-      vx *= friction; vy *= friction;
+      vx *= f; vy *= f;
       apply();
-      if (Math.hypot(vx, vy) > 0.02) inertiaRAF = requestAnimationFrame(tick);
+      if (Math.abs(vx) + Math.abs(vy) > 0.02) inertiaRAF = requestAnimationFrame(tick);
       else inertiaRAF = null;
     }
     inertiaRAF = requestAnimationFrame(tick);
@@ -437,9 +442,14 @@
     }
   });
 
-  // Slow the background video to half speed
+  // Load video only on desktop — .MOV is too heavy for mobile
   const bgvid = document.getElementById('bgvid');
-  bgvid.addEventListener('canplay', () => { bgvid.playbackRate = 0.4; }, { once: true });
+  if (!isMobile) {
+    bgvid.src = 'images/background_video.MOV';
+    bgvid.addEventListener('canplay', () => { bgvid.playbackRate = 0.4; }, { once: true });
+  } else {
+    bgvid.remove();
+  }
 
   // --- Tile tilt on hover — subtle 3° based on cursor position ---
   document.querySelectorAll('.tile').forEach(tile => {
@@ -483,16 +493,19 @@
     }
   });
 
-  // Idle fade for back button — reveals on cursor activity, hides when still
-  let idleT;
-  function rouse(){
+  // Back button: always visible on touch, fades after idle on desktop
+  if (isMobile) {
     document.body.classList.remove('idle');
-    clearTimeout(idleT);
-    idleT = setTimeout(() => document.body.classList.add('idle'), 2600);
+  } else {
+    let idleT;
+    function rouse(){
+      document.body.classList.remove('idle');
+      clearTimeout(idleT);
+      idleT = setTimeout(() => document.body.classList.add('idle'), 2600);
+    }
+    window.addEventListener('mousemove', rouse);
+    rouse();
   }
-  window.addEventListener('mousemove', rouse);
-  window.addEventListener('touchstart', rouse);
-  rouse();
 
   centerView();
 
@@ -531,7 +544,7 @@
       tile.style.opacity = (1 - k * 0.45).toFixed(3);
     }
   }
-  function scheduleDepth(){ if (!depthRAF) depthRAF = requestAnimationFrame(updateDepth); }
+  function scheduleDepth(){ if (!isMobile && !depthRAF) depthRAF = requestAnimationFrame(updateDepth); }
   window.addEventListener('resize', scheduleDepth);
   scheduleDepth();
 
