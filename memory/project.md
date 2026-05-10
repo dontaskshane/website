@@ -16,6 +16,7 @@
 | `archive/2/`, `archive/3/` | Archived experimental sites (untouched) |
 | `archive/motion.html` | Retired Motion shader page (Three.js slideshow) — unlinked, kept for reference |
 | `CNAME` | Custom domain config |
+| `drini/index.html` + `drini/live.txt` | Weiterleitung zu CutsByDrini (Vercel, Pfad `/drini`). In `live.txt` eine Zeile: `https://DEIN-VERCEL-PROJEKT.vercel.app/drini` — dann `www.shanewetzel.xyz/drini/` leitet weiter. |
 | `images/` | Photos + logo. Subfolders `digital/` (6 photos), `analog/` (12 photos); 30 more photos at root + `logo_sw.png` |
 
 ## index.html Details (landing)
