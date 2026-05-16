@@ -160,25 +160,9 @@
     font-size: 11px;
     font-weight: 400;
     color: var(--ink-dim);
-    text-decoration: none;
     letter-spacing: 0.02em;
-    cursor: default;
     user-select: none;
   }
-  .footer-extra {
-    pointer-events: auto;
-    display: inline;
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--ink-dim);
-    text-decoration: none;
-    letter-spacing: 0.02em;
-    margin-left: 10px;
-    opacity: 0.75;
-    border-left: 1px solid rgba(29, 29, 31, 0.15);
-    padding-left: 10px;
-  }
-  .footer-extra:hover { opacity: 1; color: var(--ink); }
 
   @media (max-width: 720px) {
     html, body { overflow-y: auto; }
@@ -324,14 +308,14 @@
       <span class="logo-wrap"><img src="images/logo_sw.png" alt="" class="spin-breathe"></span>
       <span class="label">Universe</span>
     </a>
-    <button type="button" class="tile" id="aboutTile" aria-label="About" aria-haspopup="dialog">
+    <button type="button" class="tile" id="aboutTile" aria-label="About me" aria-haspopup="dialog">
       <span class="emoji">🕵️</span>
-      <span class="label">About</span>
+      <span class="label">About me</span>
     </button>
   </main>
 
   <footer>
-    <a href="dashboard.html" class="backdoor">© 2026 Shane Wetzel</a><a href="drini/" class="footer-extra">CutsByDrini</a>
+    <span class="backdoor">© 2026 Shane Wetzel</span>
   </footer>
 
   <div class="modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" aria-hidden="true">
@@ -349,16 +333,17 @@
           <div class="about-label">Contact</div>
           <div class="about-col">
             <p>Bern, CH</p>
-             </div>
+            <p><a href="mailto:hello@shanewetzel.xyz">hello@shanewetzel.xyz</a></p>
+          </div>
           <div class="about-col">
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-            <p><em>Aliquam fringilla massa massa, sit amet molestie orci suscipit sed. Ut tincidunt eleifend felis sit amet suscipit.</em></p>
+            <p><a href="https://www.instagram.com/" target="_blank" rel="noopener">Instagram</a></p>
           </div>
         </div>
         <div class="about-row">
-          <div class="about-label">Studio</div>
+          <div class="about-label">About me</div>
           <div class="about-col" style="grid-column: span 2;">
-            <p>Curabitur vitae odio pretium, volutpat augue efficitur, ullamcorper ante. Nunc ultrices eget urna in aliquet. Nulla at ullamcorper leo. Aliquam egestas non lacus sed tempor.</p>
+            <p>Shane Wetzel is based in Bern, Switzerland.</p>
+            <p>This site collects selected work, photographs, and a visual universe of ongoing references.</p>
           </div>
         </div>
       </div>
@@ -368,13 +353,22 @@
 <script>
 (function(){
   const PHOTOS = [
-    'img_1.JPG','img_2.jpeg','img_3.jpeg','img_4.jpeg','img_5.jpeg',
-    'img_6.jpeg','img_7.JPG','img_8.JPG','img_9.JPG','img_10.JPG',
-    'img_11.jpeg','img_12.jpg','img_13.jpg','img_14.jpg','img_15.jpg',
-    'img_16.jpeg','img_17.jpeg','DSC04066.JPG','DSC04133.JPG',
-    'IMG_0191.jpeg','IMG_0206.jpeg','IMG_1921.jpeg','IMG_2125.JPG',
-    'IMG_2287.jpeg','IMG_2441.jpeg','IMG_2659.jpeg','IMG_2836.jpeg',
-    'R0000188.JPG','R0000229.JPG','dedeAA018A.jpg'
+    'images/digital/altstadt.JPG',
+    'images/digital/american_psycho.JPG',
+    'images/digital/bike.JPG',
+    'images/digital/karussell.JPG',
+    'images/digital/people.JPG',
+    'images/digital/work.JPG',
+    'images/analog/bali.jpg',
+    'images/analog/beach.jpg',
+    'images/analog/ducati.jpg',
+    'images/analog/gurtenfestival.jpg',
+    'images/analog/rome.jpg',
+    'images/iPhone/audi.jpeg',
+    'images/iPhone/bahnhof.jpeg',
+    'images/iPhone/lombok.jpeg',
+    'images/iPhone/sardinien.jpeg',
+    'images/iPhone/vully.jpeg'
   ];
   const a = document.getElementById('bdA');
   const b = document.getElementById('bdB');
@@ -382,7 +376,7 @@
   let i = 0, active = a, next = b;
 
   function swap() {
-    const src = 'images/' + pool[i % pool.length];
+    const src = pool[i % pool.length];
     const img = new Image();
     img.onload = () => {
       next.src = src;
