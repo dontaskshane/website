@@ -83,7 +83,7 @@ export default function Home({ backdropUrls }: { backdropUrls: string[] }) {
       <main className={styles.main}>
         <Link href="/work" className={styles.tile} aria-label="Work">
           <span className={styles.logoWrap}>
-            <Image src="/images/finder_folder.png" alt="" width={92} height={92} />
+            <Image src="/images/finder_folder.png" alt="" width={92} height={92} priority />
           </span>
           <span className={styles.label}>Work</span>
         </Link>
@@ -94,6 +94,7 @@ export default function Home({ backdropUrls }: { backdropUrls: string[] }) {
               alt=""
               width={92}
               height={92}
+              priority
               className={styles.spinBreathe}
             />
           </span>
