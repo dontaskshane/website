@@ -452,6 +452,53 @@ function NotesWidget({ initial }: { initial: Note[] }) {
   );
 }
 
+/* ================= Password ================= */
+function PasswordWidget() {
+  const [pw, setPw] = useState('');
+  const [msg, setMsg] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const supabase = useMemo(() => createClient(), []);
+
+  async function change(e: React.FormEvent) {
+    e.preventDefault();
+    const { error } = await supabase.auth.updateUser({ password: pw });
+    if (error) {
+      setMsg(error.message);
+      return;
+    }
+    setMsg('Passwort geändert ✓');
+    setPw('');
+  }
+
+  return (
+    <section className={styles.widget}>
+      <div className={styles.widgetHead}>
+        <h2>🔐 Konto</h2>
+        <button className={styles.btnGhostSm} onClick={() => setOpen(!open)}>
+          {open ? 'Schliessen' : 'Passwort ändern'}
+        </button>
+      </div>
+      {open && (
+        <form className={styles.noteForm} onSubmit={change}>
+          <input
+            type="password"
+            placeholder="Neues Passwort (min. 8 Zeichen)"
+            value={pw}
+            minLength={8}
+            onChange={(e) => setPw(e.target.value)}
+            autoComplete="new-password"
+            required
+          />
+          <button type="submit" className={styles.btnPrimarySm}>
+            OK
+          </button>
+        </form>
+      )}
+      {msg && <p className={styles.empty}>{msg}</p>}
+    </section>
+  );
+}
+
 /* ================= Shell ================= */
 export default function Dashboard({
   email,
@@ -500,6 +547,7 @@ export default function Dashboard({
         <div className={styles.colNarrow}>
           <NewsWidget news={news} sources={sources} />
           <NotesWidget initial={notes} />
+          <PasswordWidget />
         </div>
       </main>
     </div>
