@@ -543,6 +543,217 @@
 
 .noteDelete:hover { color: #c0392b; }
 
+/* ---------- Quick actions ---------- */
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.quickBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(29, 29, 31, 0.1);
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.quickBtn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 113, 227, 0.35);
+  transform: translateY(-1px);
+}
+
+.quickBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+.quickIcon {
+  font-size: 22px;
+  font-family: var(--emoji);
+}
+
+/* ---------- Stats ---------- */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.kpi {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.kpiNum {
+  display: block;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.kpiLabel {
+  display: block;
+  font-size: 10px;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.sparkline {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sparkBar {
+  fill: rgba(29, 29, 31, 0.22);
+}
+
+.sparkBarToday {
+  fill: #0071e3;
+}
+
+/* ---------- Activity feed ---------- */
+.activityList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.activityList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(29, 29, 31, 0.06);
+  font-size: 13px;
+}
+
+.activityList li:last-child {
+  border-bottom: none;
+}
+
+.activityIcon {
+  font-family: var(--emoji);
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.activityBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.activityLabel {
+  display: block;
+  font-weight: 500;
+}
+
+.activityDetail {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activityTime {
+  font-size: 11px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ---------- Command bar ---------- */
+.cmdOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(29, 29, 31, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 20px 20px;
+}
+
+.cmdPanel {
+  width: min(520px, 100%);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.cmdInput {
+  width: 100%;
+  padding: 15px 18px;
+  border: none;
+  border-bottom: 1px solid rgba(29, 29, 31, 0.1);
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.cmdList {
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.cmdItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cmdItemActive {
+  background: rgba(0, 113, 227, 0.12);
+}
+
+.cmdHint {
+  font-size: 11px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .grid {

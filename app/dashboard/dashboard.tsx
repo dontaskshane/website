@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { revalidatePublicPages } from './actions';
@@ -22,6 +22,8 @@ type Photo = {
 
 type Source = { id: string; name: string; feed_url: string; active: boolean };
 type Note = { id: string; body: string; done: boolean };
+type Activity = { id: number; kind: string; detail: string; created_at: string };
+type ViewRow = { day: string; path: string; count: number };
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/`;
 const CATEGORIES = ['digital', 'analog', 'iphone'] as const;
@@ -192,6 +194,7 @@ function PhotoManager({ initial }: { initial: Photo[] }) {
           </span>
         )}
         <input
+          id="photo-file-input"
           ref={fileRef}
           type="file"
           accept="image/*"
@@ -243,11 +246,17 @@ function PhotoManager({ initial }: { initial: Photo[] }) {
                 </select>
                 <button
                   title="Auf der Startseite zeigen"
+                  aria-label={`${p.title} auf der Startseite ${p.show_on_home ? 'ausblenden' : 'zeigen'}`}
+                  aria-pressed={p.show_on_home}
                   onClick={() => toggleHome(p)}
                 >
                   {p.show_on_home ? '🏠' : '▢'}
                 </button>
-                <button title="Löschen" onClick={() => remove(p)}>
+                <button
+                  title="Löschen"
+                  aria-label={`${p.title} löschen`}
+                  onClick={() => remove(p)}
+                >
                   🗑
                 </button>
               </div>
@@ -427,7 +436,9 @@ function NotesWidget({ initial }: { initial: Note[] }) {
       </div>
       <form className={styles.noteForm} onSubmit={add}>
         <input
+          id="note-input"
           placeholder="Neue Notiz…"
+          aria-label="Neue Notiz"
           value={body}
           onChange={(e) => setBody(e.target.value)}
         />
@@ -449,6 +460,274 @@ function NotesWidget({ initial }: { initial: Note[] }) {
         ))}
       </ul>
     </section>
+  );
+}
+
+/* ================= Quick actions ================= */
+function QuickActions({ onRevalidated }: { onRevalidated: () => void }) {
+  const [busy, setBusy] = useState(false);
+
+  async function refreshCache() {
+    setBusy(true);
+    await revalidatePublicPages();
+    setBusy(false);
+    onRevalidated();
+  }
+
+  return (
+    <section className={styles.widget}>
+      <div className={styles.quickGrid}>
+        <button
+          className={styles.quickBtn}
+          onClick={() => document.getElementById('photo-file-input')?.click()}
+        >
+          <span className={styles.quickIcon}>📤</span>
+          Foto hochladen
+        </button>
+        <button
+          className={styles.quickBtn}
+          onClick={() => {
+            const el = document.getElementById('note-input') as HTMLInputElement | null;
+            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => el?.focus(), 350);
+          }}
+        >
+          <span className={styles.quickIcon}>📝</span>
+          Neue Notiz
+        </button>
+        <button className={styles.quickBtn} onClick={refreshCache} disabled={busy}>
+          <span className={styles.quickIcon}>{busy ? '⏳' : '♻️'}</span>
+          Cache aktualisieren
+        </button>
+        <a className={styles.quickBtn} href="/" target="_blank" rel="noopener">
+          <span className={styles.quickIcon}>🌍</span>
+          Website ansehen
+        </a>
+      </div>
+    </section>
+  );
+}
+
+/* ================= Stats / analytics snapshot ================= */
+function StatsWidget({
+  photoCount,
+  openNotes,
+  views,
+}: {
+  photoCount: number;
+  openNotes: number;
+  views: ViewRow[];
+}) {
+  // Aggregate daily totals for the last 14 days
+  const days: { label: string; total: number }[] = [];
+  const byDay = new Map<string, number>();
+  for (const v of views) byDay.set(v.day, (byDay.get(v.day) ?? 0) + v.count);
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    days.push({
+      label: d.toLocaleDateString('de-CH', { day: 'numeric', month: 'short' }),
+      total: byDay.get(key) ?? 0,
+    });
+  }
+  const today = days[days.length - 1].total;
+  const week = days.slice(-7).reduce((s, d) => s + d.total, 0);
+  const max = Math.max(1, ...days.map((d) => d.total));
+
+  const W = 280;
+  const H = 56;
+  const bw = W / days.length;
+
+  return (
+    <section className={styles.widget}>
+      <div className={styles.widgetHead}>
+        <h2>📊 Statistik</h2>
+        <span className={styles.widgetMeta}>letzte 14 Tage</span>
+      </div>
+      <div className={styles.kpiRow}>
+        <div className={styles.kpi}>
+          <span className={styles.kpiNum}>{today}</span>
+          <span className={styles.kpiLabel}>Views heute</span>
+        </div>
+        <div className={styles.kpi}>
+          <span className={styles.kpiNum}>{week}</span>
+          <span className={styles.kpiLabel}>Views 7 Tage</span>
+        </div>
+        <div className={styles.kpi}>
+          <span className={styles.kpiNum}>{photoCount}</span>
+          <span className={styles.kpiLabel}>Fotos</span>
+        </div>
+        <div className={styles.kpi}>
+          <span className={styles.kpiNum}>{openNotes}</span>
+          <span className={styles.kpiLabel}>offene Notizen</span>
+        </div>
+      </div>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className={styles.sparkline}
+        role="img"
+        aria-label={`Seitenaufrufe der letzten 14 Tage, heute ${today}`}
+      >
+        {days.map((d, i) => {
+          const h = Math.max(2, (d.total / max) * (H - 4));
+          return (
+            <rect
+              key={i}
+              x={i * bw + 2}
+              y={H - h}
+              width={bw - 4}
+              height={h}
+              rx={2}
+              className={
+                i === days.length - 1 ? styles.sparkBarToday : styles.sparkBar
+              }
+            >
+              <title>{`${d.label}: ${d.total}`}</title>
+            </rect>
+          );
+        })}
+      </svg>
+    </section>
+  );
+}
+
+/* ================= Activity feed ================= */
+const ACTIVITY_META: Record<string, { icon: string; label: string }> = {
+  photo_added: { icon: '📷', label: 'Foto hinzugefügt' },
+  photo_deleted: { icon: '🗑', label: 'Foto gelöscht' },
+  note_added: { icon: '📝', label: 'Notiz erstellt' },
+  source_added: { icon: '📰', label: 'News-Quelle hinzugefügt' },
+  source_removed: { icon: '📰', label: 'News-Quelle entfernt' },
+};
+
+function relativeTime(iso: string): string {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return 'gerade eben';
+  if (s < 3600) return `vor ${Math.floor(s / 60)} Min`;
+  if (s < 86400) return `vor ${Math.floor(s / 3600)} Std`;
+  if (s < 7 * 86400) return `vor ${Math.floor(s / 86400)} Tagen`;
+  return new Date(iso).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' });
+}
+
+function ActivityFeed({ activity }: { activity: Activity[] }) {
+  return (
+    <section className={styles.widget}>
+      <div className={styles.widgetHead}>
+        <h2>🕘 Aktivität</h2>
+      </div>
+      {activity.length ? (
+        <ul className={styles.activityList}>
+          {activity.map((a) => {
+            const meta = ACTIVITY_META[a.kind] ?? { icon: '•', label: a.kind };
+            return (
+              <li key={a.id}>
+                <span className={styles.activityIcon}>{meta.icon}</span>
+                <span className={styles.activityBody}>
+                  <span className={styles.activityLabel}>{meta.label}</span>
+                  {a.detail && <span className={styles.activityDetail}>{a.detail}</span>}
+                </span>
+                <span className={styles.activityTime}>{relativeTime(a.created_at)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className={styles.empty}>
+          Noch keine Einträge — Aktionen wie Uploads erscheinen hier automatisch.
+        </p>
+      )}
+    </section>
+  );
+}
+
+/* ================= Command bar (⌘K) ================= */
+type Command = { label: string; hint: string; run: () => void };
+
+function CommandBar({
+  open,
+  onClose,
+  commands,
+}: {
+  open: boolean;
+  onClose: () => void;
+  commands: Command[];
+}) {
+  const [query, setQuery] = useState('');
+  const [index, setIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return commands;
+    return commands.filter(
+      (c) => c.label.toLowerCase().includes(q) || c.hint.toLowerCase().includes(q)
+    );
+  }, [commands, query]);
+
+  useEffect(() => {
+    if (open) {
+      setQuery('');
+      setIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 30);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [query]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className={styles.cmdOverlay}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className={styles.cmdPanel} role="dialog" aria-label="Befehle">
+        <input
+          ref={inputRef}
+          className={styles.cmdInput}
+          placeholder="Wohin oder was? (Esc zum Schliessen)"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              setIndex((i) => Math.min(i + 1, filtered.length - 1));
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              setIndex((i) => Math.max(i - 1, 0));
+            } else if (e.key === 'Enter' && filtered[index]) {
+              onClose();
+              filtered[index].run();
+            } else if (e.key === 'Escape') {
+              onClose();
+            }
+          }}
+        />
+        <ul className={styles.cmdList}>
+          {filtered.map((c, i) => (
+            <li key={c.label}>
+              <button
+                className={`${styles.cmdItem} ${i === index ? styles.cmdItemActive : ''}`}
+                onMouseEnter={() => setIndex(i)}
+                onClick={() => {
+                  onClose();
+                  c.run();
+                }}
+              >
+                <span>{c.label}</span>
+                <span className={styles.cmdHint}>{c.hint}</span>
+              </button>
+            </li>
+          ))}
+          {!filtered.length && <li className={styles.empty}>Nichts gefunden.</li>}
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -505,21 +784,76 @@ export default function Dashboard({
   photos,
   sources,
   notes,
+  activity,
+  views,
   news,
 }: {
   email: string;
   photos: Photo[];
   sources: Source[];
   notes: Note[];
+  activity: Activity[];
+  views: ViewRow[];
   news: NewsItem[];
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const [cmdOpen, setCmdOpen] = useState(false);
 
-  async function signOut() {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     router.refresh();
-  }
+  }, [supabase, router]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCmdOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const commands: Command[] = useMemo(
+    () => [
+      {
+        label: '📤 Foto hochladen',
+        hint: 'Upload',
+        run: () => document.getElementById('photo-file-input')?.click(),
+      },
+      {
+        label: '📝 Neue Notiz',
+        hint: 'Fokus aufs Notizfeld',
+        run: () => {
+          const el = document.getElementById('note-input') as HTMLInputElement | null;
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => el?.focus(), 350);
+        },
+      },
+      {
+        label: '♻️ Cache aktualisieren',
+        hint: 'Öffentliche Seiten neu bauen',
+        run: () => void revalidatePublicPages(),
+      },
+      { label: '🌍 Startseite', hint: 'shanewetzel.xyz', run: () => window.open('/', '_blank') },
+      { label: '📁 Work', hint: '/work', run: () => window.open('/work', '_blank') },
+      { label: '🌀 Universe', hint: '/universe', run: () => window.open('/universe', '_blank') },
+      {
+        label: '▲ Vercel-Projekt',
+        hint: 'Deployments & Domains',
+        run: () => window.open('https://vercel.com/dontaskshanes-projects/shanewetzel-xyz', '_blank'),
+      },
+      {
+        label: '⚡️ Supabase-Projekt',
+        hint: 'Datenbank & Storage',
+        run: () => window.open('https://supabase.com/dashboard/project/xjgnclvqhpdhdvqucpcc', '_blank'),
+      },
+      { label: '🚪 Abmelden', hint: 'Session beenden', run: () => void signOut() },
+    ],
+    [signOut]
+  );
 
   return (
     <div className={styles.shell}>
@@ -533,6 +867,13 @@ export default function Dashboard({
           </nav>
         </div>
         <div className={styles.topbarRight}>
+          <button
+            className={styles.btnGhostSm}
+            onClick={() => setCmdOpen(true)}
+            aria-label="Befehle öffnen"
+          >
+            ⌘K
+          </button>
           <span className={styles.email}>{email}</span>
           <button className={styles.btnGhostSm} onClick={signOut}>
             Abmelden
@@ -542,14 +883,23 @@ export default function Dashboard({
 
       <main className={styles.grid}>
         <div className={styles.colWide}>
+          <QuickActions onRevalidated={() => router.refresh()} />
           <PhotoManager initial={photos} />
         </div>
         <div className={styles.colNarrow}>
+          <StatsWidget
+            photoCount={photos.length}
+            openNotes={notes.filter((n) => !n.done).length}
+            views={views}
+          />
+          <ActivityFeed activity={activity} />
           <NewsWidget news={news} sources={sources} />
           <NotesWidget initial={notes} />
           <PasswordWidget />
         </div>
       </main>
+
+      <CommandBar open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
     </div>
   );
 }

@@ -13,6 +13,20 @@ export default function LoginForm() {
   const [busy, setBusy] = useState(false);
   const router = useRouter();
 
+  function friendlyError(message: string): string {
+    if (message.includes('Invalid login credentials'))
+      return 'E-Mail oder Passwort falsch.';
+    if (message.includes('Email not confirmed'))
+      return 'E-Mail noch nicht bestätigt — check dein Postfach.';
+    if (message.includes('signups are disabled') || message.includes('Database error'))
+      return 'Registrierung ist nur für Shane möglich.';
+    if (message.toLowerCase().includes('rate limit'))
+      return 'Zu viele Versuche — warte kurz und probier es nochmal.';
+    if (message.includes('fetch') || message.includes('network'))
+      return 'Verbindungsfehler — prüfe dein Internet und versuch es erneut.';
+    return `Serverfehler: ${message}`;
+  }
+
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -21,7 +35,7 @@ export default function LoginForm() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setError(error.message);
+      setError(friendlyError(error.message));
       setBusy(false);
       return;
     }
@@ -35,7 +49,7 @@ export default function LoginForm() {
     const supabase = createClient();
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) {
-      setError(error.message);
+      setError(friendlyError(error.message));
     } else {
       setInfo('Account erstellt — check dein E-Mail-Postfach zur Bestätigung.');
     }
