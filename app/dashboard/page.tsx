@@ -23,14 +23,15 @@ export default async function DashboardPage() {
   }
 
   const since = new Date();
-  since.setDate(since.getDate() - 13);
+  since.setDate(since.getDate() - 6);
   const sinceStr = since.toISOString().slice(0, 10);
 
   const [
     { data: photos },
     { data: sources },
     { data: notes },
-    { data: activity },
+    { data: todos },
+    { data: links },
     { data: views },
     news,
   ] = await Promise.all([
@@ -41,19 +42,14 @@ export default async function DashboardPage() {
       .order('sort')
       .order('created_at'),
     supabase.from('news_sources').select('*').order('name'),
-    supabase
-      .from('notes')
-      .select('*')
-      .order('done')
-      .order('created_at', { ascending: false }),
-    supabase
-      .from('activity_log')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(15),
-    supabase.from('page_views').select('day, path, count').gte('day', sinceStr),
+    supabase.from('notes').select('*').order('created_at', { ascending: false }),
+    supabase.from('todos').select('*').order('created_at', { ascending: false }),
+    supabase.from('links').select('*').order('created_at', { ascending: false }),
+    supabase.from('page_views').select('count').gte('day', sinceStr),
     getNews(),
   ]);
+
+  const weekViews = (views ?? []).reduce((sum, v) => sum + v.count, 0);
 
   return (
     <Dashboard
@@ -61,8 +57,9 @@ export default async function DashboardPage() {
       photos={photos ?? []}
       sources={sources ?? []}
       notes={notes ?? []}
-      activity={activity ?? []}
-      views={views ?? []}
+      todos={todos ?? []}
+      links={links ?? []}
+      weekViews={weekViews}
       news={news}
     />
   );

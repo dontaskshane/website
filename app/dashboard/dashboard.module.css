@@ -102,10 +102,13 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
+.btnPrimarySm:disabled { opacity: 0.4; cursor: default; }
+
 .btnGhost {
-  padding: 10px;
+  padding: 6px 8px;
   border: none;
   background: none;
   font-size: 12px;
@@ -193,13 +196,37 @@
   color: var(--ink-dim);
 }
 
+/* ---------- Greeting ---------- */
+.greeting {
+  max-width: 1280px;
+  margin: 26px auto 0;
+  padding: 0 22px;
+}
+
+.greeting h1 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.greeting p {
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-top: 2px;
+}
+
+.greetingOverdue {
+  color: #c0392b;
+  font-weight: 500;
+}
+
 /* ---------- Grid ---------- */
 .grid {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
   gap: 18px;
   max-width: 1280px;
-  margin: 22px auto 0;
+  margin: 18px auto 0;
   padding: 0 22px;
   align-items: start;
 }
@@ -229,6 +256,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   margin-bottom: 14px;
 }
 
@@ -236,6 +264,7 @@
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.015em;
+  white-space: nowrap;
 }
 
 .widgetMeta {
@@ -247,6 +276,350 @@
   font-size: 13px;
   color: var(--ink-dim);
   padding: 12px 0;
+}
+
+/* ---------- Todos ---------- */
+.todoForm {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.todoForm input[type="text"],
+.todoForm input:not([type]) {
+  flex: 1;
+  min-width: 0;
+}
+
+.todoForm input {
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(29, 29, 31, 0.15);
+  background: rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.todoForm input:focus { border-color: #0071e3; }
+
+.todoForm input[type="date"] {
+  width: 130px;
+  flex-shrink: 0;
+  color: var(--ink-dim);
+}
+
+.todoSection { margin-top: 12px; }
+
+.todoSectionTitle {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-dim);
+  padding: 0 4px 4px;
+}
+
+.todoOverdueTitle { color: #c0392b; }
+
+.todoList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.todoList li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 4px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.todoList li:hover { background: rgba(0, 0, 0, 0.035); }
+
+.todoCheck {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--ink-dim);
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.todoCheck:hover { color: #0071e3; }
+
+.todoBody {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.todoBodyDone {
+  text-decoration: line-through;
+  color: var(--ink-dim);
+}
+
+.todoDue {
+  font-size: 11px;
+  color: var(--ink-dim);
+  background: rgba(29, 29, 31, 0.06);
+  border-radius: 6px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.todoDueToday {
+  color: #0071e3;
+  background: rgba(0, 113, 227, 0.1);
+  font-weight: 500;
+}
+
+.todoDueOverdue {
+  color: #c0392b;
+  background: rgba(192, 57, 43, 0.1);
+  font-weight: 500;
+}
+
+.todoDelete {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink-dim);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.todoList li:hover .todoDelete { opacity: 1; }
+.todoDelete:hover { color: #c0392b; }
+
+.todoDoneBar {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(29, 29, 31, 0.08);
+}
+
+.todoListDone { opacity: 0.75; }
+
+/* ---------- Notes ---------- */
+.noteForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.noteForm textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(29, 29, 31, 0.15);
+  background: rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.noteForm textarea:focus { border-color: #0071e3; }
+
+.noteForm .btnPrimarySm { align-self: flex-end; }
+
+.noteStack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.noteCard {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 10px;
+  padding: 12px 14px 8px;
+}
+
+.notePinned {
+  border-color: rgba(201, 168, 76, 0.55);
+  background: rgba(255, 250, 235, 0.7);
+}
+
+.noteBody {
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  cursor: text;
+}
+
+.noteEdit {
+  width: 100%;
+  border: 1px solid #0071e3;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  background: #fff;
+}
+
+.noteFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.noteTime {
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
+.noteActions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.noteCard:hover .noteActions { opacity: 1; }
+
+.noteActions button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink-dim);
+  padding: 2px 5px;
+  border-radius: 6px;
+}
+
+.noteActions button:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--ink);
+}
+
+/* ---------- Ablage (links) ---------- */
+.linkFilter {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(29, 29, 31, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+  width: 140px;
+}
+
+.linkFilter:focus { border-color: #0071e3; }
+
+.linkForm {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.linkForm input {
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(29, 29, 31, 0.15);
+  background: rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease;
+  min-width: 0;
+}
+
+.linkForm input:first-child { flex: 1.2; }
+.linkForm input:nth-child(2) { flex: 1; }
+.linkForm input:focus { border-color: #0071e3; }
+
+.linkList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.linkItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border-radius: 8px;
+}
+
+.linkItem:hover { background: rgba(0, 0, 0, 0.035); }
+
+.linkFavicon {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.linkBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.linkBody a {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.linkBody a:hover { color: #0071e3; }
+
+.linkMeta {
+  font-size: 11.5px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.linkActions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.linkItem:hover .linkActions { opacity: 1; }
+
+.linkActions button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink-dim);
+  padding: 2px 5px;
+  border-radius: 6px;
+}
+
+.linkActions button:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--ink);
 }
 
 /* ---------- Photo manager ---------- */
@@ -436,7 +809,7 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  max-height: 480px;
+  max-height: 420px;
   overflow-y: auto;
 }
 
@@ -475,215 +848,32 @@
   line-height: 1.4;
 }
 
-/* ---------- Notes ---------- */
-.noteForm {
+/* ---------- Password ---------- */
+.pwForm {
   display: flex;
   gap: 6px;
-  margin-bottom: 10px;
 }
 
-.noteForm input {
+.pwForm input {
   flex: 1;
+  min-width: 0;
   padding: 9px 12px;
   border-radius: 8px;
   border: 1px solid rgba(29, 29, 31, 0.15);
+  background: rgba(255, 255, 255, 0.8);
+  font: inherit;
   font-size: 13px;
   outline: none;
 }
 
-.noteForm input:focus {
-  border-color: #0071e3;
-}
+.pwForm input:focus { border-color: #0071e3; }
 
-.noteList {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.noteList li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 4px;
-  font-size: 13px;
-  border-radius: 8px;
-}
-
-.noteList li span {
-  flex: 1;
-  min-width: 0;
-  word-break: break-word;
-}
-
-.noteDone span {
-  text-decoration: line-through;
+/* ---------- Views footnote ---------- */
+.viewsLine {
+  font-size: 11.5px;
   color: var(--ink-dim);
-}
-
-.noteCheck,
-.noteDelete {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 2px;
-}
-
-.noteDelete {
-  color: var(--ink-dim);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.noteList li:hover .noteDelete {
-  opacity: 1;
-}
-
-.noteDelete:hover { color: #c0392b; }
-
-/* ---------- Quick actions ---------- */
-.quickGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
-}
-
-.quickBtn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(29, 29, 31, 0.1);
-  background: rgba(255, 255, 255, 0.55);
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink);
-  text-decoration: none;
   text-align: center;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
-}
-
-.quickBtn:hover {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(0, 113, 227, 0.35);
-  transform: translateY(-1px);
-}
-
-.quickBtn:disabled {
-  opacity: 0.55;
-  cursor: default;
-  transform: none;
-}
-
-.quickIcon {
-  font-size: 22px;
-  font-family: var(--emoji);
-}
-
-/* ---------- Stats ---------- */
-.kpiRow {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.kpi {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 10px;
-  padding: 10px 8px;
-  text-align: center;
-}
-
-.kpiNum {
-  display: block;
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.kpiLabel {
-  display: block;
-  font-size: 10px;
-  color: var(--ink-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 2px;
-}
-
-.sparkline {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.sparkBar {
-  fill: rgba(29, 29, 31, 0.22);
-}
-
-.sparkBarToday {
-  fill: #0071e3;
-}
-
-/* ---------- Activity feed ---------- */
-.activityList {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-.activityList li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 4px;
-  border-bottom: 1px solid rgba(29, 29, 31, 0.06);
-  font-size: 13px;
-}
-
-.activityList li:last-child {
-  border-bottom: none;
-}
-
-.activityIcon {
-  font-family: var(--emoji);
-  font-size: 14px;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.activityBody {
-  flex: 1;
-  min-width: 0;
-}
-
-.activityLabel {
-  display: block;
-  font-weight: 500;
-}
-
-.activityDetail {
-  display: block;
-  font-size: 12px;
-  color: var(--ink-dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.activityTime {
-  font-size: 11px;
-  color: var(--ink-dim);
-  white-space: nowrap;
-  flex-shrink: 0;
+  padding: 4px 0 8px;
 }
 
 /* ---------- Command bar ---------- */
@@ -760,7 +950,12 @@
     grid-template-columns: 1fr;
     padding: 0 14px;
   }
+  .greeting { padding: 0 14px; }
   .topbar { padding: 12px 14px; }
   .email { display: none; }
   .topnav { gap: 10px; }
+  .todoForm { flex-wrap: wrap; }
+  .todoForm input[type="date"] { width: auto; flex: 1; }
+  .linkForm { flex-wrap: wrap; }
+  .linkForm input:first-child { flex-basis: 100%; }
 }

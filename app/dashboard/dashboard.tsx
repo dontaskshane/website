@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { revalidatePublicPages } from './actions';
+import { revalidatePublicPages, fetchPageTitle } from './actions';
 import type { NewsItem } from './news';
 import styles from './dashboard.module.css';
 
@@ -21,12 +21,28 @@ type Photo = {
 };
 
 type Source = { id: string; name: string; feed_url: string; active: boolean };
-type Note = { id: string; body: string; done: boolean };
-type Activity = { id: number; kind: string; detail: string; created_at: string };
-type ViewRow = { day: string; path: string; count: number };
+type Note = { id: string; body: string; pinned: boolean; created_at: string; updated_at: string };
+type Todo = {
+  id: string;
+  body: string;
+  due_date: string | null;
+  done: boolean;
+  done_at: string | null;
+  created_at: string;
+};
+type LinkItem = { id: string; url: string; title: string; comment: string; created_at: string };
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/`;
 const CATEGORIES = ['digital', 'analog', 'iphone'] as const;
+
+function relativeTime(iso: string): string {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return 'gerade eben';
+  if (s < 3600) return `vor ${Math.floor(s / 60)} Min`;
+  if (s < 86400) return `vor ${Math.floor(s / 3600)} Std`;
+  if (s < 7 * 86400) return `vor ${Math.floor(s / 86400)} Tagen`;
+  return new Date(iso).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' });
+}
 
 /* ---------- image compression: max 2400px, JPEG q0.82 ---------- */
 async function compressImage(
@@ -60,6 +76,476 @@ function slugify(name: string) {
     .replace(/[^a-z0-9_-]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
+}
+
+/* ================= Todos ================= */
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function dueLabel(due: string): string {
+  const today = todayStr();
+  if (due === today) return 'heute';
+  const d = new Date(due + 'T00:00');
+  const t = new Date(today + 'T00:00');
+  const diff = Math.round((d.getTime() - t.getTime()) / 86400000);
+  if (diff === 1) return 'morgen';
+  if (diff === -1) return 'gestern';
+  if (diff < 0) return d.toLocaleDateString('de-CH', { day: 'numeric', month: 'short' });
+  if (diff < 7) return d.toLocaleDateString('de-CH', { weekday: 'long' });
+  return d.toLocaleDateString('de-CH', { day: 'numeric', month: 'short' });
+}
+
+function TodosWidget({ initial }: { initial: Todo[] }) {
+  const [todos, setTodos] = useState(initial);
+  const [body, setBody] = useState('');
+  const [due, setDue] = useState('');
+  const [showDone, setShowDone] = useState(false);
+  const supabase = useMemo(() => createClient(), []);
+
+  const today = todayStr();
+  const open = todos.filter((t) => !t.done);
+  const done = todos
+    .filter((t) => t.done)
+    .sort((a, b) => (b.done_at ?? '').localeCompare(a.done_at ?? ''));
+
+  const overdue = open
+    .filter((t) => t.due_date && t.due_date < today)
+    .sort((a, b) => a.due_date!.localeCompare(b.due_date!));
+  const dueToday = open.filter((t) => t.due_date === today);
+  const upcoming = open
+    .filter((t) => t.due_date && t.due_date > today)
+    .sort((a, b) => a.due_date!.localeCompare(b.due_date!));
+  const someday = open.filter((t) => !t.due_date);
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    if (!body.trim()) return;
+    const { data, error } = await supabase
+      .from('todos')
+      .insert({ body: body.trim(), due_date: due || null })
+      .select()
+      .single();
+    if (error) return alert(error.message);
+    setTodos((cur) => [data as Todo, ...cur]);
+    setBody('');
+    setDue('');
+  }
+
+  async function toggle(t: Todo) {
+    const patch = t.done
+      ? { done: false, done_at: null }
+      : { done: true, done_at: new Date().toISOString() };
+    const { error } = await supabase.from('todos').update(patch).eq('id', t.id);
+    if (error) return alert(error.message);
+    setTodos((cur) => cur.map((x) => (x.id === t.id ? { ...x, ...patch } : x)));
+  }
+
+  async function remove(t: Todo) {
+    const { error } = await supabase.from('todos').delete().eq('id', t.id);
+    if (error) return alert(error.message);
+    setTodos((cur) => cur.filter((x) => x.id !== t.id));
+  }
+
+  async function clearDone() {
+    const ids = done.map((t) => t.id);
+    if (!ids.length) return;
+    const { error } = await supabase.from('todos').delete().in('id', ids);
+    if (error) return alert(error.message);
+    setTodos((cur) => cur.filter((x) => !x.done));
+    setShowDone(false);
+  }
+
+  function section(title: string, items: Todo[], overdueStyle = false) {
+    if (!items.length) return null;
+    return (
+      <div className={styles.todoSection}>
+        <div className={`${styles.todoSectionTitle} ${overdueStyle ? styles.todoOverdueTitle : ''}`}>
+          {title}
+        </div>
+        <ul className={styles.todoList}>
+          {items.map((t) => (
+            <li key={t.id}>
+              <button
+                className={styles.todoCheck}
+                aria-label={`${t.body} erledigt`}
+                onClick={() => toggle(t)}
+              >
+                ○
+              </button>
+              <span className={styles.todoBody}>{t.body}</span>
+              {t.due_date && (
+                <span
+                  className={`${styles.todoDue} ${
+                    t.due_date < today ? styles.todoDueOverdue : ''
+                  } ${t.due_date === today ? styles.todoDueToday : ''}`}
+                >
+                  {dueLabel(t.due_date)}
+                </span>
+              )}
+              <button
+                className={styles.todoDelete}
+                aria-label={`${t.body} löschen`}
+                onClick={() => remove(t)}
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  return (
+    <section className={styles.widget}>
+      <div className={styles.widgetHead}>
+        <h2>☑️ Todos</h2>
+        <span className={styles.widgetMeta}>
+          {open.length ? `${open.length} offen` : 'alles erledigt ✨'}
+        </span>
+      </div>
+
+      <form className={styles.todoForm} onSubmit={add}>
+        <input
+          id="todo-input"
+          placeholder="Was steht an?"
+          aria-label="Neues Todo"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+        />
+        <input
+          type="date"
+          aria-label="Fällig am"
+          value={due}
+          min={today}
+          onChange={(e) => setDue(e.target.value)}
+        />
+        <button type="submit" className={styles.btnPrimarySm}>
+          +
+        </button>
+      </form>
+
+      {section('Überfällig', overdue, true)}
+      {section('Heute', dueToday)}
+      {section('Demnächst', upcoming)}
+      {section('Irgendwann', someday)}
+
+      {!open.length && !done.length && (
+        <p className={styles.empty}>Nichts offen. Geniess den Tag.</p>
+      )}
+
+      {done.length > 0 && (
+        <div className={styles.todoDoneBar}>
+          <button className={styles.btnGhost} onClick={() => setShowDone(!showDone)}>
+            {showDone ? '▾' : '▸'} Erledigt ({done.length})
+          </button>
+          {showDone && (
+            <button className={styles.btnGhost} onClick={clearDone}>
+              Aufräumen
+            </button>
+          )}
+        </div>
+      )}
+      {showDone && (
+        <ul className={`${styles.todoList} ${styles.todoListDone}`}>
+          {done.map((t) => (
+            <li key={t.id}>
+              <button
+                className={styles.todoCheck}
+                aria-label={`${t.body} wieder öffnen`}
+                onClick={() => toggle(t)}
+              >
+                ●
+              </button>
+              <span className={`${styles.todoBody} ${styles.todoBodyDone}`}>{t.body}</span>
+              <button
+                className={styles.todoDelete}
+                aria-label={`${t.body} löschen`}
+                onClick={() => remove(t)}
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/* ================= Notes ================= */
+function NotesWidget({ initial }: { initial: Note[] }) {
+  const [notes, setNotes] = useState(initial);
+  const [body, setBody] = useState('');
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState('');
+  const supabase = useMemo(() => createClient(), []);
+
+  const sorted = [...notes].sort((a, b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    return b.updated_at.localeCompare(a.updated_at);
+  });
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    if (!body.trim()) return;
+    const { data, error } = await supabase
+      .from('notes')
+      .insert({ body: body.trim() })
+      .select()
+      .single();
+    if (error) return alert(error.message);
+    setNotes((cur) => [data as Note, ...cur]);
+    setBody('');
+  }
+
+  async function saveEdit(n: Note) {
+    const next = editBody.trim();
+    if (!next || next === n.body) {
+      setEditing(null);
+      return;
+    }
+    const patch = { body: next, updated_at: new Date().toISOString() };
+    const { error } = await supabase.from('notes').update(patch).eq('id', n.id);
+    if (error) return alert(error.message);
+    setNotes((cur) => cur.map((x) => (x.id === n.id ? { ...x, ...patch } : x)));
+    setEditing(null);
+  }
+
+  async function togglePin(n: Note) {
+    const { error } = await supabase
+      .from('notes')
+      .update({ pinned: !n.pinned })
+      .eq('id', n.id);
+    if (error) return alert(error.message);
+    setNotes((cur) =>
+      cur.map((x) => (x.id === n.id ? { ...x, pinned: !x.pinned } : x))
+    );
+  }
+
+  async function remove(n: Note) {
+    if (!confirm('Notiz löschen?')) return;
+    const { error } = await supabase.from('notes').delete().eq('id', n.id);
+    if (error) return alert(error.message);
+    setNotes((cur) => cur.filter((x) => x.id !== n.id));
+  }
+
+  return (
+    <section className={styles.widget}>
+      <div className={styles.widgetHead}>
+        <h2>📝 Notizen</h2>
+      </div>
+      <form className={styles.noteForm} onSubmit={add}>
+        <textarea
+          id="note-input"
+          placeholder="Gedanke festhalten…"
+          aria-label="Neue Notiz"
+          rows={2}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
+        />
+        <button type="submit" className={styles.btnPrimarySm}>
+          Speichern
+        </button>
+      </form>
+      <div className={styles.noteStack}>
+        {sorted.map((n) => (
+          <div key={n.id} className={`${styles.noteCard} ${n.pinned ? styles.notePinned : ''}`}>
+            {editing === n.id ? (
+              <textarea
+                className={styles.noteEdit}
+                value={editBody}
+                rows={Math.min(8, Math.max(2, editBody.split('\n').length))}
+                autoFocus
+                onChange={(e) => setEditBody(e.target.value)}
+                onBlur={() => saveEdit(n)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    saveEdit(n);
+                  }
+                  if (e.key === 'Escape') setEditing(null);
+                }}
+              />
+            ) : (
+              <p
+                className={styles.noteBody}
+                onClick={() => {
+                  setEditing(n.id);
+                  setEditBody(n.body);
+                }}
+                title="Klicken zum Bearbeiten"
+              >
+                {n.body}
+              </p>
+            )}
+            <div className={styles.noteFooter}>
+              <span className={styles.noteTime}>{relativeTime(n.updated_at)}</span>
+              <span className={styles.noteActions}>
+                <button
+                  aria-label={n.pinned ? 'Notiz lösen' : 'Notiz anpinnen'}
+                  onClick={() => togglePin(n)}
+                >
+                  {n.pinned ? '📌' : '📍'}
+                </button>
+                <button aria-label="Notiz löschen" onClick={() => remove(n)}>
+                  ✕
+                </button>
+              </span>
+            </div>
+          </div>
+        ))}
+        {!sorted.length && <p className={styles.empty}>Noch keine Notizen.</p>}
+      </div>
+    </section>
+  );
+}
+
+/* ================= Ablage (links) ================= */
+function LinksWidget({ initial }: { initial: LinkItem[] }) {
+  const [links, setLinks] = useState(initial);
+  const [url, setUrl] = useState('');
+  const [comment, setComment] = useState('');
+  const [filter, setFilter] = useState('');
+  const [busy, setBusy] = useState(false);
+  const supabase = useMemo(() => createClient(), []);
+
+  const shown = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return links;
+    return links.filter(
+      (l) =>
+        l.title.toLowerCase().includes(q) ||
+        l.url.toLowerCase().includes(q) ||
+        l.comment.toLowerCase().includes(q)
+    );
+  }, [links, filter]);
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    let normalized = url.trim();
+    if (!normalized) return;
+    if (!/^https?:\/\//i.test(normalized)) normalized = 'https://' + normalized;
+    try {
+      new URL(normalized);
+    } catch {
+      alert('Das sieht nicht wie eine gültige URL aus.');
+      return;
+    }
+    setBusy(true);
+    const title = await fetchPageTitle(normalized);
+    const { data, error } = await supabase
+      .from('links')
+      .insert({ url: normalized, title, comment: comment.trim() })
+      .select()
+      .single();
+    setBusy(false);
+    if (error) return alert(error.message);
+    setLinks((cur) => [data as LinkItem, ...cur]);
+    setUrl('');
+    setComment('');
+  }
+
+  async function remove(l: LinkItem) {
+    const { error } = await supabase.from('links').delete().eq('id', l.id);
+    if (error) return alert(error.message);
+    setLinks((cur) => cur.filter((x) => x.id !== l.id));
+  }
+
+  function domain(u: string) {
+    try {
+      return new URL(u).hostname.replace(/^www\./, '');
+    } catch {
+      return u;
+    }
+  }
+
+  return (
+    <section className={styles.widget}>
+      <div className={styles.widgetHead}>
+        <h2>🔖 Ablage</h2>
+        {links.length > 4 && (
+          <input
+            className={styles.linkFilter}
+            placeholder="Suchen…"
+            aria-label="Ablage durchsuchen"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        )}
+      </div>
+
+      <form className={styles.linkForm} onSubmit={add}>
+        <input
+          id="link-input"
+          placeholder="URL einfügen…"
+          aria-label="Link-URL"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          required
+        />
+        <input
+          placeholder="Wieso cool? (optional)"
+          aria-label="Kommentar"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+        />
+        <button type="submit" className={styles.btnPrimarySm} disabled={busy}>
+          {busy ? '…' : '+'}
+        </button>
+      </form>
+
+      <ul className={styles.linkList}>
+        {shown.map((l) => (
+          <li key={l.id} className={styles.linkItem}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className={styles.linkFavicon}
+              src={`https://www.google.com/s2/favicons?domain=${domain(l.url)}&sz=32`}
+              alt=""
+              width={16}
+              height={16}
+              loading="lazy"
+            />
+            <span className={styles.linkBody}>
+              <a href={l.url} target="_blank" rel="noopener noreferrer">
+                {l.title || domain(l.url)}
+              </a>
+              <span className={styles.linkMeta}>
+                {domain(l.url)}
+                {l.comment && <> — {l.comment}</>}
+              </span>
+            </span>
+            <span className={styles.linkActions}>
+              <button
+                aria-label="URL kopieren"
+                title="URL kopieren"
+                onClick={() => navigator.clipboard?.writeText(l.url)}
+              >
+                ⧉
+              </button>
+              <button aria-label="Link löschen" title="Löschen" onClick={() => remove(l)}>
+                ✕
+              </button>
+            </span>
+          </li>
+        ))}
+        {!shown.length && (
+          <p className={styles.empty}>
+            {links.length ? 'Nichts gefunden.' : 'URL oben reinwerfen — Titel wird automatisch geholt.'}
+          </p>
+        )}
+      </ul>
+    </section>
+  );
 }
 
 /* ================= Photo manager ================= */
@@ -234,6 +720,7 @@ function PhotoManager({ initial }: { initial: Photo[] }) {
               <div className={styles.photoActions}>
                 <select
                   value={p.category}
+                  aria-label={`Kategorie von ${p.title}`}
                   onChange={(e) =>
                     changeCategory(p, e.target.value as Photo['category'])
                   }
@@ -337,12 +824,17 @@ function NewsWidget({
               <button
                 className={styles.srcToggle}
                 onClick={() => toggleSource(s)}
+                aria-label={`${s.name} ${s.active ? 'pausieren' : 'aktivieren'}`}
                 title={s.active ? 'aktiv' : 'pausiert'}
               >
                 {s.active ? '🟢' : '⚪️'}
               </button>
               <span className={styles.srcName}>{s.name}</span>
-              <button className={styles.srcDelete} onClick={() => removeSource(s)}>
+              <button
+                className={styles.srcDelete}
+                aria-label={`${s.name} entfernen`}
+                onClick={() => removeSource(s)}
+              >
                 ✕
               </button>
             </div>
@@ -369,7 +861,7 @@ function NewsWidget({
       )}
 
       <ul className={styles.newsList}>
-        {news.slice(0, 24).map((n, i) => (
+        {news.slice(0, 16).map((n, i) => (
           <li key={i}>
             <a href={n.link} target="_blank" rel="noopener noreferrer">
               <span className={styles.newsSource}>{n.source}</span>
@@ -389,254 +881,6 @@ function NewsWidget({
         ))}
         {!news.length && <p className={styles.empty}>Keine News geladen.</p>}
       </ul>
-    </section>
-  );
-}
-
-/* ================= Notes ================= */
-function NotesWidget({ initial }: { initial: Note[] }) {
-  const [notes, setNotes] = useState(initial);
-  const [body, setBody] = useState('');
-  const supabase = useMemo(() => createClient(), []);
-
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    if (!body.trim()) return;
-    const { data, error } = await supabase
-      .from('notes')
-      .insert({ body: body.trim() })
-      .select()
-      .single();
-    if (error) return alert(error.message);
-    setNotes((cur) => [data as Note, ...cur]);
-    setBody('');
-  }
-
-  async function toggle(n: Note) {
-    const { error } = await supabase
-      .from('notes')
-      .update({ done: !n.done })
-      .eq('id', n.id);
-    if (error) return alert(error.message);
-    setNotes((cur) =>
-      cur.map((x) => (x.id === n.id ? { ...x, done: !x.done } : x))
-    );
-  }
-
-  async function remove(n: Note) {
-    const { error } = await supabase.from('notes').delete().eq('id', n.id);
-    if (error) return alert(error.message);
-    setNotes((cur) => cur.filter((x) => x.id !== n.id));
-  }
-
-  return (
-    <section className={styles.widget}>
-      <div className={styles.widgetHead}>
-        <h2>📝 Notizen</h2>
-      </div>
-      <form className={styles.noteForm} onSubmit={add}>
-        <input
-          id="note-input"
-          placeholder="Neue Notiz…"
-          aria-label="Neue Notiz"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-        />
-        <button type="submit" className={styles.btnPrimarySm}>
-          +
-        </button>
-      </form>
-      <ul className={styles.noteList}>
-        {notes.map((n) => (
-          <li key={n.id} className={n.done ? styles.noteDone : ''}>
-            <button className={styles.noteCheck} onClick={() => toggle(n)}>
-              {n.done ? '☑︎' : '☐'}
-            </button>
-            <span>{n.body}</span>
-            <button className={styles.noteDelete} onClick={() => remove(n)}>
-              ✕
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-/* ================= Quick actions ================= */
-function QuickActions({ onRevalidated }: { onRevalidated: () => void }) {
-  const [busy, setBusy] = useState(false);
-
-  async function refreshCache() {
-    setBusy(true);
-    await revalidatePublicPages();
-    setBusy(false);
-    onRevalidated();
-  }
-
-  return (
-    <section className={styles.widget}>
-      <div className={styles.quickGrid}>
-        <button
-          className={styles.quickBtn}
-          onClick={() => document.getElementById('photo-file-input')?.click()}
-        >
-          <span className={styles.quickIcon}>📤</span>
-          Foto hochladen
-        </button>
-        <button
-          className={styles.quickBtn}
-          onClick={() => {
-            const el = document.getElementById('note-input') as HTMLInputElement | null;
-            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => el?.focus(), 350);
-          }}
-        >
-          <span className={styles.quickIcon}>📝</span>
-          Neue Notiz
-        </button>
-        <button className={styles.quickBtn} onClick={refreshCache} disabled={busy}>
-          <span className={styles.quickIcon}>{busy ? '⏳' : '♻️'}</span>
-          Cache aktualisieren
-        </button>
-        <a className={styles.quickBtn} href="/" target="_blank" rel="noopener">
-          <span className={styles.quickIcon}>🌍</span>
-          Website ansehen
-        </a>
-      </div>
-    </section>
-  );
-}
-
-/* ================= Stats / analytics snapshot ================= */
-function StatsWidget({
-  photoCount,
-  openNotes,
-  views,
-}: {
-  photoCount: number;
-  openNotes: number;
-  views: ViewRow[];
-}) {
-  // Aggregate daily totals for the last 14 days
-  const days: { label: string; total: number }[] = [];
-  const byDay = new Map<string, number>();
-  for (const v of views) byDay.set(v.day, (byDay.get(v.day) ?? 0) + v.count);
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    days.push({
-      label: d.toLocaleDateString('de-CH', { day: 'numeric', month: 'short' }),
-      total: byDay.get(key) ?? 0,
-    });
-  }
-  const today = days[days.length - 1].total;
-  const week = days.slice(-7).reduce((s, d) => s + d.total, 0);
-  const max = Math.max(1, ...days.map((d) => d.total));
-
-  const W = 280;
-  const H = 56;
-  const bw = W / days.length;
-
-  return (
-    <section className={styles.widget}>
-      <div className={styles.widgetHead}>
-        <h2>📊 Statistik</h2>
-        <span className={styles.widgetMeta}>letzte 14 Tage</span>
-      </div>
-      <div className={styles.kpiRow}>
-        <div className={styles.kpi}>
-          <span className={styles.kpiNum}>{today}</span>
-          <span className={styles.kpiLabel}>Views heute</span>
-        </div>
-        <div className={styles.kpi}>
-          <span className={styles.kpiNum}>{week}</span>
-          <span className={styles.kpiLabel}>Views 7 Tage</span>
-        </div>
-        <div className={styles.kpi}>
-          <span className={styles.kpiNum}>{photoCount}</span>
-          <span className={styles.kpiLabel}>Fotos</span>
-        </div>
-        <div className={styles.kpi}>
-          <span className={styles.kpiNum}>{openNotes}</span>
-          <span className={styles.kpiLabel}>offene Notizen</span>
-        </div>
-      </div>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className={styles.sparkline}
-        role="img"
-        aria-label={`Seitenaufrufe der letzten 14 Tage, heute ${today}`}
-      >
-        {days.map((d, i) => {
-          const h = Math.max(2, (d.total / max) * (H - 4));
-          return (
-            <rect
-              key={i}
-              x={i * bw + 2}
-              y={H - h}
-              width={bw - 4}
-              height={h}
-              rx={2}
-              className={
-                i === days.length - 1 ? styles.sparkBarToday : styles.sparkBar
-              }
-            >
-              <title>{`${d.label}: ${d.total}`}</title>
-            </rect>
-          );
-        })}
-      </svg>
-    </section>
-  );
-}
-
-/* ================= Activity feed ================= */
-const ACTIVITY_META: Record<string, { icon: string; label: string }> = {
-  photo_added: { icon: '📷', label: 'Foto hinzugefügt' },
-  photo_deleted: { icon: '🗑', label: 'Foto gelöscht' },
-  note_added: { icon: '📝', label: 'Notiz erstellt' },
-  source_added: { icon: '📰', label: 'News-Quelle hinzugefügt' },
-  source_removed: { icon: '📰', label: 'News-Quelle entfernt' },
-};
-
-function relativeTime(iso: string): string {
-  const s = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (s < 60) return 'gerade eben';
-  if (s < 3600) return `vor ${Math.floor(s / 60)} Min`;
-  if (s < 86400) return `vor ${Math.floor(s / 3600)} Std`;
-  if (s < 7 * 86400) return `vor ${Math.floor(s / 86400)} Tagen`;
-  return new Date(iso).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' });
-}
-
-function ActivityFeed({ activity }: { activity: Activity[] }) {
-  return (
-    <section className={styles.widget}>
-      <div className={styles.widgetHead}>
-        <h2>🕘 Aktivität</h2>
-      </div>
-      {activity.length ? (
-        <ul className={styles.activityList}>
-          {activity.map((a) => {
-            const meta = ACTIVITY_META[a.kind] ?? { icon: '•', label: a.kind };
-            return (
-              <li key={a.id}>
-                <span className={styles.activityIcon}>{meta.icon}</span>
-                <span className={styles.activityBody}>
-                  <span className={styles.activityLabel}>{meta.label}</span>
-                  {a.detail && <span className={styles.activityDetail}>{a.detail}</span>}
-                </span>
-                <span className={styles.activityTime}>{relativeTime(a.created_at)}</span>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <p className={styles.empty}>
-          Noch keine Einträge — Aktionen wie Uploads erscheinen hier automatisch.
-        </p>
-      )}
     </section>
   );
 }
@@ -758,7 +1002,7 @@ function PasswordWidget() {
         </button>
       </div>
       {open && (
-        <form className={styles.noteForm} onSubmit={change}>
+        <form className={styles.pwForm} onSubmit={change}>
           <input
             type="password"
             placeholder="Neues Passwort (min. 8 Zeichen)"
@@ -779,21 +1023,29 @@ function PasswordWidget() {
 }
 
 /* ================= Shell ================= */
+function focusInput(id: string) {
+  const el = document.getElementById(id) as HTMLElement | null;
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => el?.focus(), 350);
+}
+
 export default function Dashboard({
   email,
   photos,
   sources,
   notes,
-  activity,
-  views,
+  todos,
+  links,
+  weekViews,
   news,
 }: {
   email: string;
   photos: Photo[];
   sources: Source[];
   notes: Note[];
-  activity: Activity[];
-  views: ViewRow[];
+  todos: Todo[];
+  links: LinkItem[];
+  weekViews: number;
   news: NewsItem[];
 }) {
   const router = useRouter();
@@ -818,19 +1070,13 @@ export default function Dashboard({
 
   const commands: Command[] = useMemo(
     () => [
+      { label: '☑️ Neues Todo', hint: 'Fokus aufs Todo-Feld', run: () => focusInput('todo-input') },
+      { label: '📝 Neue Notiz', hint: 'Fokus aufs Notizfeld', run: () => focusInput('note-input') },
+      { label: '🔖 Link ablegen', hint: 'Fokus auf die Ablage', run: () => focusInput('link-input') },
       {
         label: '📤 Foto hochladen',
         hint: 'Upload',
         run: () => document.getElementById('photo-file-input')?.click(),
-      },
-      {
-        label: '📝 Neue Notiz',
-        hint: 'Fokus aufs Notizfeld',
-        run: () => {
-          const el = document.getElementById('note-input') as HTMLInputElement | null;
-          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => el?.focus(), 350);
-        },
       },
       {
         label: '♻️ Cache aktualisieren',
@@ -854,6 +1100,16 @@ export default function Dashboard({
     ],
     [signOut]
   );
+
+  const openTodos = todos.filter((t) => !t.done);
+  const overdueCount = openTodos.filter(
+    (t) => t.due_date && t.due_date < todayStr()
+  ).length;
+  const dateLine = new Date().toLocaleDateString('de-CH', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 
   return (
     <div className={styles.shell}>
@@ -881,21 +1137,40 @@ export default function Dashboard({
         </div>
       </header>
 
+      <div className={styles.greeting}>
+        <h1>Hoi Shane</h1>
+        <p>
+          {dateLine}
+          {openTodos.length > 0 && (
+            <>
+              {' · '}
+              {openTodos.length} Todo{openTodos.length !== 1 && 's'} offen
+              {overdueCount > 0 && (
+                <span className={styles.greetingOverdue}>
+                  {' '}
+                  ({overdueCount} überfällig)
+                </span>
+              )}
+            </>
+          )}
+          {openTodos.length === 0 && ' · alles erledigt ✨'}
+        </p>
+      </div>
+
       <main className={styles.grid}>
         <div className={styles.colWide}>
-          <QuickActions onRevalidated={() => router.refresh()} />
+          <TodosWidget initial={todos} />
+          <LinksWidget initial={links} />
           <PhotoManager initial={photos} />
         </div>
         <div className={styles.colNarrow}>
-          <StatsWidget
-            photoCount={photos.length}
-            openNotes={notes.filter((n) => !n.done).length}
-            views={views}
-          />
-          <ActivityFeed activity={activity} />
-          <NewsWidget news={news} sources={sources} />
           <NotesWidget initial={notes} />
+          <NewsWidget news={news} sources={sources} />
           <PasswordWidget />
+          <p className={styles.viewsLine}>
+            {weekViews} {weekViews === 1 ? 'Besuch' : 'Besuche'} auf der Website in den
+            letzten 7 Tagen
+          </p>
         </div>
       </main>
 
