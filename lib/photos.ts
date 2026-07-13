@@ -9,6 +9,7 @@ export type Photo = {
   height: number | null;
   sort: number;
   show_on_home: boolean;
+  created_at: string;
 };
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/`;
@@ -29,7 +30,7 @@ function publicClient() {
 export async function getPhotos(): Promise<Photo[]> {
   const { data, error } = await publicClient()
     .from('photos')
-    .select('id, category, storage_path, title, width, height, sort, show_on_home')
+    .select('id, category, storage_path, title, width, height, sort, show_on_home, created_at')
     .order('category')
     .order('sort')
     .order('created_at');

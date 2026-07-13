@@ -20,6 +20,7 @@ export default async function WorkPage() {
     title: p.title || p.storage_path.split('/').pop() || '',
     width: p.width ?? 1600,
     height: p.height ?? 1067,
+    createdAt: p.created_at,
   }));
   return <Gallery photos={items} />;
 }

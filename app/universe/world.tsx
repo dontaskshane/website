@@ -32,14 +32,16 @@ type Placement = {
 export default function World({ photos }: { photos: WorldPhoto[] }) {
   const [isMobile, setIsMobile] = useState(false);
   const [ready, setReady] = useState(false);
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<WorldPhoto | null>(null);
   const [idle, setIdle] = useState(true);
   const [zoomPct, setZoomPct] = useState<number | null>(null);
+  const [showHint, setShowHint] = useState(true);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const justDragged = useRef(false);
+  const resetViewRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     setIsMobile(navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
@@ -146,6 +148,13 @@ export default function World({ photos }: { photos: WorldPhoto[] }) {
       apply();
     }
 
+    resetViewRef.current = () => {
+      stopInertia();
+      tz = 1;
+      centerView();
+      showZoomPill();
+    };
+
     function showZoomPill() {
       setZoomPct(Math.round(tz * 100));
       clearTimeout(zoomPillT);
@@ -233,6 +242,18 @@ export default function World({ photos }: { photos: WorldPhoto[] }) {
       showZoomPill();
     };
 
+    // Double-click zooms in toward the cursor (shift+double-click zooms out)
+    const onDblClick = (e: MouseEvent) => {
+      stopInertia();
+      const f = e.shiftKey ? 1 / 1.6 : 1.6;
+      const newZ = Math.max(MIN_Z, Math.min(MAX_Z, tz * f));
+      tx = e.clientX - (e.clientX - tx) * (newZ / tz);
+      ty = e.clientY - (e.clientY - ty) * (newZ / tz);
+      tz = newZ;
+      apply();
+      showZoomPill();
+    };
+
     const onTouchStart = (e: TouchEvent) => {
       stopInertia();
       for (const t of Array.from(e.changedTouches)) {
@@ -311,6 +332,7 @@ export default function World({ photos }: { photos: WorldPhoto[] }) {
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
     stage.addEventListener('wheel', onWheel, { passive: false });
+    stage.addEventListener('dblclick', onDblClick);
     stage.addEventListener('touchstart', onTouchStart, { passive: false });
     stage.addEventListener('touchmove', onTouchMove, { passive: false });
     stage.addEventListener('touchend', onTouchEnd);
@@ -323,10 +345,12 @@ export default function World({ photos }: { photos: WorldPhoto[] }) {
       stopInertia();
       if (depthRAF) cancelAnimationFrame(depthRAF);
       clearTimeout(zoomPillT);
+      resetViewRef.current = null;
       stage.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       stage.removeEventListener('wheel', onWheel);
+      stage.removeEventListener('dblclick', onDblClick);
       stage.removeEventListener('touchstart', onTouchStart);
       stage.removeEventListener('touchmove', onTouchMove);
       stage.removeEventListener('touchend', onTouchEnd);
@@ -336,6 +360,20 @@ export default function World({ photos }: { photos: WorldPhoto[] }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, isMobile, placements]);
+
+  // Usage hint fades after a few seconds or on first interaction
+  useEffect(() => {
+    if (!ready || !showHint) return;
+    const dismiss = () => setShowHint(false);
+    const t = setTimeout(dismiss, 5000);
+    window.addEventListener('pointerdown', dismiss, { once: true });
+    window.addEventListener('wheel', dismiss, { once: true });
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('pointerdown', dismiss);
+      window.removeEventListener('wheel', dismiss);
+    };
+  }, [ready, showHint]);
 
   // Back button: always visible on touch, fades after idle on desktop
   useEffect(() => {
@@ -379,7 +417,7 @@ export default function World({ photos }: { photos: WorldPhoto[] }) {
             muted
             loop
             playsInline
-            src="/images/background_video.MOV"
+            src="/images/background_video.mp4"
             onCanPlay={(e) => {
               e.currentTarget.playbackRate = 0.4;
             }}
@@ -405,7 +443,7 @@ export default function World({ photos }: { photos: WorldPhoto[] }) {
                   }}
                   onClick={(e) => {
                     if (justDragged.current) return;
-                    setLightbox(p.url);
+                    setLightbox(p);
                     e.stopPropagation();
                   }}
                 >
@@ -441,14 +479,33 @@ export default function World({ photos }: { photos: WorldPhoto[] }) {
         <span>Shane Wetzel</span>
       </Link>
 
-      <div className={`${styles.zoomPill} ${zoomPct !== null ? styles.show : ''}`}>
+      <button
+        className={`${styles.zoomPill} ${zoomPct !== null ? styles.show : ''}`}
+        onClick={() => resetViewRef.current?.()}
+        title="Ansicht zurücksetzen"
+        aria-label="Zoom zurücksetzen"
+      >
         {zoomPct ?? 100}%
+      </button>
+
+      <div className={`${styles.hint} ${showHint ? styles.hintShow : ''}`} aria-hidden="true">
+        {isMobile
+          ? 'Ziehen zum Bewegen · Pinch zum Zoomen'
+          : 'Ziehen zum Bewegen · Scrollen zoomt · Doppelklick zoomt rein'}
       </div>
 
       {lightbox && (
         <div className={styles.lb} onClick={() => setLightbox(null)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox} alt="" className={styles.lbImg} />
+          <Image
+            src={lightbox.url}
+            alt=""
+            width={lightbox.width}
+            height={lightbox.height}
+            sizes="94vw"
+            quality={85}
+            className={styles.lbImg}
+            priority
+          />
         </div>
       )}
     </div>

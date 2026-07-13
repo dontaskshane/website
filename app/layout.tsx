@@ -13,6 +13,14 @@ export const metadata: Metadata = {
     siteName: 'Shane Wetzel',
     locale: 'en',
     type: 'website',
+    images: [
+      {
+        url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/digital/altstadt.jpg`,
+        width: 2400,
+        height: 1600,
+        alt: 'Shane Wetzel — photography',
+      },
+    ],
   },
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦠</text></svg>",
