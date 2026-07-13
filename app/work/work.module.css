@@ -232,8 +232,6 @@
   flex-direction: column;
   cursor: pointer;
   border-radius: 6px;
-  content-visibility: auto;
-  contain-intrinsic-size: 220px 200px;
 }
 
 .thumb {
@@ -242,20 +240,15 @@
   border-radius: 6px;
   overflow: hidden;
   background: linear-gradient(135deg, #ece8e1 0%, #dedad3 100%);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
   position: relative;
-  contain: layout paint;
 }
 
 .thumbImg {
   object-fit: cover;
   user-select: none;
   -webkit-user-drag: none;
-}
-
-.card:hover .thumb {
-  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.4), 0 10px 24px -6px rgba(0, 0, 0, 0.18);
-  transform: translateY(-1px);
+  /* Slight overscale hides sub-pixel seams at rounded edges in Safari */
+  transform: scale(1.005);
 }
 
 .caption {
@@ -337,6 +330,7 @@
 .pathBar {
   position: sticky;
   bottom: 0;
+  z-index: 2;
   margin-top: auto;
   display: flex;
   align-items: center;
@@ -348,7 +342,7 @@
   padding-right: 32px;
   font-size: 11.5px;
   color: var(--ink-dim);
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(250, 249, 247, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid rgba(29, 29, 31, 0.08);
