@@ -75,7 +75,7 @@ export default function Home({ backdropUrls }: { backdropUrls: string[] }) {
       <Backdrop urls={backdropUrls} />
 
       <header className={styles.header}>
-        <Link href="/" className={styles.name}>
+        <Link href="/home" className={styles.name}>
           Shane Wetzel
         </Link>
       </header>

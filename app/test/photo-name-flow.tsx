@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import styles from './test.module.css';
 
@@ -27,7 +28,7 @@ export default function PhotoNameFlow({ photos }: { photos: FlowPhoto[] }) {
   }, [activePhoto]);
 
   function movePreview(x: number, y: number) {
-    const width = Math.min(260, window.innerWidth - 32);
+    const width = Math.min(360, window.innerWidth - 32);
     const height = width * 0.75;
     const left = Math.max(16, Math.min(x + 18, window.innerWidth - width - 16));
     const top = Math.max(16, Math.min(y + 18, window.innerHeight - height - 16));
@@ -51,44 +52,51 @@ export default function PhotoNameFlow({ photos }: { photos: FlowPhoto[] }) {
     <main className={styles.page} onClick={(event) => {
       if (event.target === event.currentTarget) setActivePhoto(null);
     }}>
-      <p className={styles.flow} aria-label="Photo names">
-        {photos.map((photo, index) => (
-          <span className={styles.item} key={photo.id}>
-            <button
-              type="button"
-              className={styles.name}
-              aria-label={`Show ${photo.title}`}
-              onPointerEnter={(event) => {
-                if (event.pointerType === 'mouse') {
-                  movePreview(event.clientX, event.clientY);
-                  setActivePhoto(photo);
-                }
-              }}
-              onPointerMove={(event) => {
-                if (event.pointerType === 'mouse') movePreview(event.clientX, event.clientY);
-              }}
-              onPointerLeave={(event) => {
-                if (event.pointerType === 'mouse') setActivePhoto(null);
-              }}
-              onFocus={(event) => {
-                if (event.currentTarget.matches(':focus-visible')) {
-                  showAtElement(photo, event.currentTarget);
-                }
-              }}
-              onBlur={() => setActivePhoto(null)}
-              onClick={(event) => {
-                if (window.matchMedia('(hover: none)').matches) {
-                  if (activePhoto?.id === photo.id) setActivePhoto(null);
-                  else showAtElement(photo, event.currentTarget);
-                }
-              }}
-            >
-              {photo.title}
-            </button>
-            {index < photos.length - 1 ? ' ' : null}
-          </span>
-        ))}
-      </p>
+      <div className={styles.composition}>
+        <p className={styles.flow} aria-label="Photo names">
+          {photos.map((photo, index) => (
+            <span className={styles.item} key={photo.id}>
+              <button
+                type="button"
+                className={styles.name}
+                aria-label={`Show ${photo.title}`}
+                onPointerEnter={(event) => {
+                  if (event.pointerType === 'mouse') {
+                    movePreview(event.clientX, event.clientY);
+                    setActivePhoto(photo);
+                  }
+                }}
+                onPointerMove={(event) => {
+                  if (event.pointerType === 'mouse') movePreview(event.clientX, event.clientY);
+                }}
+                onPointerLeave={(event) => {
+                  if (event.pointerType === 'mouse') setActivePhoto(null);
+                }}
+                onFocus={(event) => {
+                  if (event.currentTarget.matches(':focus-visible')) {
+                    showAtElement(photo, event.currentTarget);
+                  }
+                }}
+                onBlur={() => setActivePhoto(null)}
+                onClick={(event) => {
+                  if (window.matchMedia('(hover: none)').matches) {
+                    if (activePhoto?.id === photo.id) setActivePhoto(null);
+                    else showAtElement(photo, event.currentTarget);
+                  }
+                }}
+              >
+                {photo.title}
+              </button>
+              {index < photos.length - 1 ? ' ' : null}
+            </span>
+          ))}
+          {' '}
+          <Link className={`${styles.name} ${styles.redirect}`} href="/home">
+            redirect
+          </Link>
+        </p>
+        <h1 className={styles.title}>SHANE WETZEL</h1>
+      </div>
 
       {activePhoto && (
         <div
@@ -101,7 +109,7 @@ export default function PhotoNameFlow({ photos }: { photos: FlowPhoto[] }) {
             src={activePhoto.url}
             alt=""
             fill
-            sizes="260px"
+            sizes="360px"
             quality={65}
             className={styles.previewImage}
           />
