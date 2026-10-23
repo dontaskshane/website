@@ -1,17 +1,23 @@
 .page {
-  position: fixed;
-  inset: 0;
+  --pad: clamp(22px, 4vw, 64px);
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
-  align-items: center;
-  padding: clamp(22px, 4vw, 64px);
-  overflow: hidden;
+  flex-direction: column;
+  padding:
+    calc(var(--pad) + env(safe-area-inset-top, 0px))
+    calc(var(--pad) + env(safe-area-inset-right, 0px))
+    calc(var(--pad) + 4vh + env(safe-area-inset-bottom, 0px))
+    calc(var(--pad) + env(safe-area-inset-left, 0px));
   background: #fff;
   color: #000;
 }
 
+/* margin-block: auto centres when it fits, and lets the page scroll when it doesn't */
 .composition {
   width: 100%;
-  transform: translateY(-4vh);
+  margin-block: auto;
+  container-type: inline-size;
 }
 
 .flow {
@@ -27,7 +33,8 @@
 .title {
   margin-top: 0.4em;
   font-family: Helvetica, Arial, sans-serif;
-  font-size: clamp(56px, 14vw, 200px);
+  /* Sized to the container so the single line always fits edge to edge */
+  font-size: min(200px, 13.1cqi);
   font-weight: 500;
   line-height: 0.86;
   letter-spacing: -0.025em;
@@ -52,10 +59,19 @@
   transition: color 140ms ease;
 }
 
-.name:hover,
 .name:focus-visible {
   color: oklch(84% 0.29 142);
   outline: none;
+}
+
+@media (hover: hover) {
+  .name:hover {
+    color: oklch(84% 0.29 142);
+  }
+}
+
+.name.active {
+  color: oklch(84% 0.29 142);
 }
 
 .redirect {
@@ -88,22 +104,21 @@
 
 @media (max-width: 600px) {
   .page {
-    padding: 22px;
+    --pad: 20px;
   }
 
   .flow {
-    font-size: clamp(19px, 5.1vw, 24px);
+    font-size: clamp(18px, 5.1vw, 24px);
     line-height: 1.25;
     letter-spacing: -0.035em;
   }
 
-  .composition {
-    transform: translateY(-3vh);
+  .title {
+    letter-spacing: -0.02em;
   }
 
-  .title {
-    font-size: clamp(48px, 15vw, 86px);
-    letter-spacing: -0.02em;
+  .preview {
+    width: min(300px, calc(100vw - 32px));
   }
 }
 
