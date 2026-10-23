@@ -23,12 +23,22 @@ export default function PhotoNameFlow({ photos }: { photos: FlowPhoto[] }) {
       if (event.key === 'Escape') setActivePhoto(null);
     };
 
+    // The preview is fixed-positioned, so drop it once the page moves under it
+    const hide = () => setActivePhoto(null);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('scroll', hide, { passive: true });
+    window.addEventListener('resize', hide);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('scroll', hide);
+      window.removeEventListener('resize', hide);
+    };
   }, [activePhoto]);
 
   function movePreview(x: number, y: number) {
-    const width = Math.min(360, window.innerWidth - 32);
+    const maxWidth = window.innerWidth <= 600 ? 300 : 360;
+    const width = Math.min(maxWidth, window.innerWidth - 32);
     const height = width * 0.75;
     const left = Math.max(16, Math.min(x + 18, window.innerWidth - width - 16));
     const top = Math.max(16, Math.min(y + 18, window.innerHeight - height - 16));
@@ -58,7 +68,7 @@ export default function PhotoNameFlow({ photos }: { photos: FlowPhoto[] }) {
             <span className={styles.item} key={photo.id}>
               <button
                 type="button"
-                className={styles.name}
+                className={`${styles.name} ${activePhoto?.id === photo.id ? styles.active : ''}`}
                 aria-label={`Show ${photo.title}`}
                 onPointerEnter={(event) => {
                   if (event.pointerType === 'mouse') {
@@ -109,7 +119,7 @@ export default function PhotoNameFlow({ photos }: { photos: FlowPhoto[] }) {
             src={activePhoto.url}
             alt=""
             fill
-            sizes="360px"
+            sizes="(max-width: 600px) 300px, 360px"
             quality={65}
             className={styles.previewImage}
           />
